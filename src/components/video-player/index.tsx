@@ -1265,6 +1265,7 @@ export default function VideoWithMap({
   initialX,
   initialY,
 }) {
+  console.log(videoUrl, "videoUrl in video with map");
   const [video, setVideo] = useState(null);
   const sortedData = useMemo(
     () => locationData?.sort((a, b) => a.timestamp - b.timestamp) || [],
