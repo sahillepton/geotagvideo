@@ -68,35 +68,39 @@ const VideoPage = async ({
   }
 
   if (videoData.mux_playback_id) {
-    //  console.log("getting mux status");
-    const id = videoData.mux_playback_id.substring(
-      videoData.mux_playback_id.lastIndexOf("/") + 1,
-      videoData.mux_playback_id.lastIndexOf(".")
-    );
-
-    const asset_data = await axios.get(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/api/mux-status/${id}`
-    );
-
-    if (asset_data.data.status !== "ready") {
-      return (
-        <div className="flex flex-col justify-center items-center h-screen">
-          <h1 className="text-2xl font-bold">Video is still processing</h1>
-          <Link
-            href="/geotaggedvideos"
-            className="text-gray-800 hover:text-gray-600 underline text-sm"
-          >
-            Go back to surveys?
-          </Link>
-        </div>
+    //  console.log("getting mux status");'
+    try {
+      const id = videoData.mux_playback_id.substring(
+        videoData.mux_playback_id.lastIndexOf("/") + 1,
+        videoData.mux_playback_id.lastIndexOf(".")
       );
-    }
 
-    if (asset_data.data.status === "ready") {
-      await supabase
-        .from("videos")
-        .update({ status: "ready" })
-        .eq("id", videoData.id);
+      const asset_data = await axios.get(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/mux-status/${id}`
+      );
+
+      if (asset_data.data.status !== "ready") {
+        return (
+          <div className="flex flex-col justify-center items-center h-screen">
+            <h1 className="text-2xl font-bold">Video is still processing</h1>
+            <Link
+              href="/geotaggedvideos"
+              className="text-gray-800 hover:text-gray-600 underline text-sm"
+            >
+              Go back to surveys?
+            </Link>
+          </div>
+        );
+      }
+
+      if (asset_data.data.status === "ready") {
+        await supabase
+          .from("videos")
+          .update({ status: "ready" })
+          .eq("id", videoData.id);
+      }
+    } catch (error) {
+      console.log(error, "error");
     }
   }
 
