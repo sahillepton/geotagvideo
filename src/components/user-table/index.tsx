@@ -13,6 +13,7 @@ import {
   UserIcon,
   UsersIcon,
   SettingsIcon,
+  MoreHorizontalIcon,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Button } from "../ui/button";
@@ -199,14 +200,29 @@ export default function UserTable({ currentUser }: { currentUser: any }) {
             header: "",
             cell: ({ row }) => {
               return (
-                <div className="flex items-center gap-1">
-                  <EditUserModel
-                    currentUser={currentUser}
-                    data={data}
-                    user={row.original}
-                  />
-                  <DeleteUserModal deletingUser={row.original} />
-                </div>
+                <Popover>
+                  <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreHorizontalIcon className="w-4 h-4 transition-colors group-hover:text-accent-foreground" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align="start"
+                    className="flex flex-col gap-1 p-2 w-56 rounded-xl shadow-lg"
+                  >
+                    <EditUserModel
+                      currentUser={currentUser}
+                      data={data}
+                      refetch={refetch}
+                    />
+
+                    <DeleteUserModal
+                      currentUser={currentUser}
+                      data={data}
+                      refetch={refetch}
+                    />
+                  </PopoverContent>
+                </Popover>
               );
             },
           },
@@ -390,7 +406,7 @@ export default function UserTable({ currentUser }: { currentUser: any }) {
                     className={`px-3 py-1.5 text-sm font-medium rounded-full transition-all duration-300
                 ${
                   num === page
-                    ? "bg-purple-600 text-white shadow-md scale-105"
+                    ? "bg-[#006fee] text-white shadow-md scale-105"
                     : "text-gray-800 hover:bg-gray-100 hover:scale-105"
                 }`}
                   >

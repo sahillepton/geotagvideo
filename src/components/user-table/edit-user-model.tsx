@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import { editUser } from "./action";
-import { Loader2, PencilIcon } from "lucide-react";
+import { ArrowRightIcon, Loader2, PencilIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -46,8 +46,16 @@ const EditUserModel = ({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <PencilIcon size={16} className="text-gray-600" />
+        <Button
+          variant="ghost"
+          className="group w-full justify-between px-3 py-2 rounded-lg transition-all 
+                       hover:bg-accent hover:text-accent-foreground"
+        >
+          <span className="flex items-center">
+            <PencilIcon className="w-4 h-4 mr-2 transition-colors group-hover:text-accent-foreground" />
+            Edit User
+          </span>
+          <ArrowRightIcon className="w-4 h-4 opacity-70 transition-all group-hover:translate-x-1 group-hover:text-accent-foreground" />
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg rounded-lg shadow-lg p-6 bg-white dark:bg-[#11181c]">
