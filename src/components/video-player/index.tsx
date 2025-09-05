@@ -172,7 +172,7 @@ const VideoPlayer = ({ url, video, setVideo, initialTimestamp = 1 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [volume, setVolume] = useState(0.5);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [qualities, setQualities] = useState([]);
@@ -191,7 +191,7 @@ const VideoPlayer = ({ url, video, setVideo, initialTimestamp = 1 }) => {
     videoEl.crossOrigin = "anonymous";
     videoEl.playsInline = true;
     videoEl.volume = volume;
-    videoEl.muted = false; // Ensure video starts unmuted
+    videoEl.muted = true; // Ensure video starts unmuted
 
     if (Hls.isSupported()) {
       const hls = new Hls({ autoStartLoad: true });
@@ -221,7 +221,9 @@ const VideoPlayer = ({ url, video, setVideo, initialTimestamp = 1 }) => {
       videoEl.play().catch(console.warn);
     });
 
-    return () => videoEl.remove();
+    return () => {
+      videoEl.remove();
+    };
   }, [url, video, setVideo]);
 
   const togglePlay = () => {
@@ -1265,7 +1267,7 @@ export default function VideoWithMap({
   initialX,
   initialY,
 }) {
-  console.log(videoUrl, "videoUrl in video with map");
+  // console.log(videoUrl, "videoUrl in video with map");
   const [video, setVideo] = useState(null);
   const sortedData = useMemo(
     () => locationData?.sort((a, b) => a.timestamp - b.timestamp) || [],

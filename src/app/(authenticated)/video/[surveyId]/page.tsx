@@ -48,7 +48,7 @@ const VideoPage = async ({
   const { data: videoData, error: videoError } = videoResult;
   const { data: surveyData, error: surveyError } = surveyResult;
 
-  console.log(videoData, "videoData");
+  //  console.log(videoData, "videoData");
 
   if (!videoData?.url && !videoData?.mux_playback_id) {
     return (
