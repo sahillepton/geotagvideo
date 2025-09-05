@@ -54,6 +54,7 @@ export function DateRangePicker({
             variant="outline"
             className="w-24 justify-between font-normal text-xs h-8 bg-[#006fee] text-white rounded-lg border-none hover:bg-[#006fee]/80 hover:text-white "
             disabled={disabled}
+            title={fromDate ? fromDate.toLocaleDateString() : "From Date"}
           >
             {fromDate ? fromDate.toLocaleDateString() : "From Date"}
             <ChevronDownIcon className="h-3 w-3" />
@@ -76,6 +77,7 @@ export function DateRangePicker({
             variant="outline"
             className="w-24 justify-between font-normal text-xs h-8 bg-[#006fee] text-white rounded-lg border-none hover:bg-[#006fee]/80 hover:text-white"
             disabled={disabled}
+            title={toDate ? toDate.toLocaleDateString() : "To Date"}
           >
             {toDate ? toDate.toLocaleDateString() : "To Date"}
             <ChevronDownIcon className="h-3 w-3" />

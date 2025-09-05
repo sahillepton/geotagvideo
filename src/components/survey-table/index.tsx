@@ -848,7 +848,10 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
                 variant="outline"
                 className="w-[80px] justify-between font-normal text-xs h-8 p-1 bg-[#006fee] text-white rounded-lg border-none hover:bg-[#006fee]/80 hover:text-white"
               >
-                <span className="truncate flex-1 text-left">
+                <span
+                  className="truncate flex-1 text-left"
+                  title={selectedState || "State"}
+                >
                   {selectedState || "State"}
                 </span>
                 <ChevronDownIcon className="h-3 w-3 flex-shrink-0 ml-1" />
@@ -883,7 +886,10 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
                 variant="outline"
                 className="w-[80px] justify-between font-normal text-xs h-8 p-1 bg-[#006fee] text-white rounded-lg border-none hover:bg-[#006fee]/80 hover:text-white"
               >
-                <span className="truncate flex-1 text-left">
+                <span
+                  className="truncate flex-1 text-left"
+                  title={selectedDistrict || "District"}
+                >
                   {selectedDistrict || "District"}
                 </span>
                 <ChevronDownIcon className="h-3 w-3 flex-shrink-0 ml-1" />
@@ -920,7 +926,10 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
                 variant="outline"
                 className="w-[80px] justify-between font-normal text-xs h-8 p-1 bg-[#006fee] text-white rounded-lg border-none hover:bg-[#006fee]/80 hover:text-white"
               >
-                <span className="truncate flex-1 text-left">
+                <span
+                  className="truncate flex-1 text-left"
+                  title={selectedBlock || "Block"}
+                >
                   {selectedBlock || "Block"}
                 </span>
                 <ChevronDownIcon className="h-3 w-3 flex-shrink-0 ml-1" />
@@ -955,7 +964,10 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
                 variant="outline"
                 className="w-[80px] justify-between font-normal text-xs h-8 p-1 bg-[#006fee] text-white rounded-lg border-none hover:bg-[#006fee]/80 hover:text-white"
               >
-                <span className="truncate flex-1 text-left">
+                <span
+                  className="truncate flex-1 text-left"
+                  title={selectedDateFilter || "Date Filter"}
+                >
                   {selectedDateFilter === "Mobile_Video_Capture_Time"
                     ? "Uploaded On"
                     : selectedDateFilter === "Created_On"
