@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
           break;
         }
         const videoId = data.video_id;
-        const {error: videoError} = await supabase.from("videos").update({mux_playback_id: `https://stream.mux.com/${playbackId}/.m3u8`}).eq("id", videoId);
+        const {error: videoError} = await supabase.from("videos").update({mux_playback_id: `https://stream.mux.com/${playbackId}.m3u8`}).eq("id", videoId);
         if (videoError) {
           console.error("❌ Error updating video:", videoError);
           return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
