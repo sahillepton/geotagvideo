@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
         const assetId = event.data.id;
         const playbackId = event.data.playback_ids?.[0]?.id;
 
-        const {data, error} = await supabase.from("assets").select("*").eq("id", assetId).single();
+        const {data, error} = await supabase.from("assets").select("*").eq("asset_id", assetId).single();
         if (error) {
           console.error("❌ Error fetching asset:", error);
           return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
