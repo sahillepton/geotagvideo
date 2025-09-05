@@ -74,6 +74,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
 } from "../ui/dropdown-menu";
+import { postData } from "@/app/actions/postdata";
 
 // Define some color pairs
 const avatarColors = [
@@ -101,7 +102,6 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
   const [selectedDateFilter, setSelectedDateFilter] = useState("");
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
-  const { setSurveys, setLoading } = useSurveyStore();
   const { open } = useSidebar();
 
   // Load all filters from localStorage on component mount
@@ -253,8 +253,8 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
 
   const getFilters = () => {
     const filters: any = {};
-    filters.userRole = currentUser.role;
-    filters.userId = currentUser.user_id;
+    filters.userRole = currentUser.User_Role;
+    filters.userId = currentUser.User_id;
     if (selectedDistrict) {
       filters.district = selectedDistrict;
     }
@@ -295,21 +295,45 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
   const { status, data, error, isFetching, isPlaceholderData } = useQuery({
     queryKey: ["videos", page, filters],
     queryFn: async () => {
-      setLoading(true);
-      const data = await getVideoList(filters, page, 10);
-      setSurveys(
-        JSON.parse(data.data).Result.map((survey: any) => ({
-          id: survey.surveyId,
-          name: survey.routeName,
-        }))
-      );
-      //   console.log(JSON.parse(data.data).Result, "data");
-      setLoading(false);
-      return JSON.parse(data.data).Result;
+      //  setLoading(true);
+      const payload = JSON.stringify([
+        {
+          Filter_By: "State",
+          Filter_Value: filters.state || "",
+        },
+        {
+          Filter_By: "District",
+          Filter_Value: filters.district || "",
+        },
+        {
+          Filter_By: "Block",
+          Filter_Value: filters.block || "",
+        },
+        {
+          Filter_By: "Route_Name",
+          Filter_Value: filters.routeName || "",
+        },
+        {
+          Filter_By: filters.dateKey || "",
+          Filter_From: filters.dateFrom || "",
+          Filter_To: filters.dateTo || "",
+        },
+      ]);
+
+      const data = await postData("/api/Video/GetVideoList", { data: payload });
+
+      const result = JSON.parse(data.data);
+
+      console.log(result, "result");
+
+      //   setLoading(false);
+      return result.Result;
     },
     placeholderData: keepPreviousData,
     staleTime: 5000,
   });
+
+  console.log(data, "data");
 
   const { data: states, isLoading: statesLoading } = useQuery({
     queryKey: ["states"],
@@ -418,7 +442,23 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
     if (!isPlaceholderData && data?.hasMore) {
       queryClient.prefetchQuery({
         queryKey: ["videos", page + 1, filters],
-        queryFn: () => getVideoList(filters, page + 1, 10),
+        queryFn: () =>
+          postData("/api/Video/GetVideoList", {
+            data: JSON.stringify([
+              { Filter_By: "State", Filter_Value: filters.state || "" },
+              { Filter_By: "District", Filter_Value: filters.district || "" },
+              { Filter_By: "Block", Filter_Value: filters.block || "" },
+              {
+                Filter_By: "Route_Name",
+                Filter_Value: filters.routeName || "",
+              },
+              {
+                Filter_By: filters.dateKey || "",
+                Filter_From: filters.dateFrom || "",
+                Filter_To: filters.dateTo || "",
+              },
+            ]),
+          }).then((res) => JSON.parse(res.data).Result),
       });
     }
   }, [data, isPlaceholderData, page, queryClient, filters]);
@@ -472,7 +512,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
             gpsTrackId={row.original.gpsTrackId}
             surveyId={row.original.surveyId}
             routeName={row.original.routeName}
-            role={currentUser.role}
+            role={currentUser.User_Role}
           />
         );
       },
@@ -488,7 +528,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
         <HoverCard>
           <HoverCardTrigger asChild>
             <Button variant="link" className="text-left">
-              {row.original.routeName}
+              {row.original.Route_Name}
             </Button>
           </HoverCardTrigger>
           <HoverCardContent className="w-80">
@@ -498,18 +538,18 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
               </div>
               <div className="space-y-1">
                 <Link
-                  href={`/video/${row.original.surveyId}`}
+                  href={`/video/${row.original.Video_ID}`}
                   className="text-sm font-semibold hover:underline"
                 >
-                  {row.original.routeName}
+                  {row.original.Route_Name}
                 </Link>
                 <div className="flex gap-2">
-                  <Badge variant={"secondary"}>{row.original.state}</Badge>
-                  <Badge variant={"secondary"}>{row.original.district}</Badge>
-                  <Badge variant={"secondary"}>{row.original.block}</Badge>
+                  <Badge variant={"secondary"}>{row.original.State}</Badge>
+                  <Badge variant={"secondary"}>{row.original.District}</Badge>
+                  <Badge variant={"secondary"}>{row.original.Block}</Badge>
                 </div>
                 <div className="text-muted-foreground text-xs">
-                  {moment(row.original.mobileVideoCaptureTime).format(
+                  {moment(row.original.Mobile_Video_Capture_On).format(
                     "DD MMM YYYY"
                   )}
                 </div>
@@ -525,48 +565,48 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
       cell: ({ row }) => (
         <div className="flex items-center justify-center">
           <span
-            title={row.original.entityName}
+            title={row.original.Entity_Name}
             className="w-20 text-center text-xs font-semibold  truncate rounded pl-1 pr-1 text-[#11181c] dark:text-white"
           >
-            {row.original.entityName.length > 20
-              ? row.original.entityName.slice(0, 20) + "..."
-              : row.original.entityName}
+            {row.original.Entity_Name.length > 20
+              ? row.original.Entity_Name.slice(0, 20) + "..."
+              : row.original.Entity_Name}
           </span>
         </div>
       ),
     },
-    {
-      accessorKey: "state",
-      header: "State",
-      cell: ({ row }) => (
-        <div className="flex items-center justify-center">
-          <span
-            title={row.original.state}
-            className="w-20 text-center text-xs font-semibold truncate rounded px-1 py-0.5 text-[#11181c] dark:text-white"
-          >
-            {row.original.state.length > 20
-              ? row.original.state.slice(0, 20) + "..."
-              : row.original.state}
-          </span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "district",
-      header: "District",
-      cell: ({ row }) => (
-        <div className="flex items-center justify-center">
-          <span
-            title={row.original.district}
-            className="w-20 text-center text-xs font-semibold  truncate  rounded px-1 py-0.5 text-[#11181c] dark:text-white"
-          >
-            {row.original.district.length > 20
-              ? row.original.district.slice(0, 20) + "..."
-              : row.original.district}
-          </span>
-        </div>
-      ),
-    },
+    // {
+    //   accessorKey: "state",
+    //   header: "State",
+    //   cell: ({ row }) => (
+    //     <div className="flex items-center justify-center">
+    //       <span
+    //         title={row.original.State}
+    //         className="w-20 text-center text-xs font-semibold truncate rounded px-1 py-0.5 text-[#11181c] dark:text-white"
+    //       >
+    //         {row.original.State.length > 20
+    //           ? row.original.State.slice(0, 20) + "..."
+    //           : row.original.State}
+    //       </span>
+    //     </div>
+    //   ),
+    // },
+    // {
+    //   accessorKey: "district",
+    //   header: "District",
+    //   cell: ({ row }) => (
+    //     <div className="flex items-center justify-center">
+    //       <span
+    //         title={row.original.District}
+    //         className="w-20 text-center text-xs font-semibold  truncate  rounded px-1 py-0.5 text-[#11181c] dark:text-white"
+    //       >
+    //         {row.original.District.length > 20
+    //           ? row.original.District.slice(0, 20) + "..."
+    //           : row.original.District}
+    //       </span>
+    //     </div>
+    //   ),
+    // },
     {
       accessorKey: "block",
       header: "Block",
@@ -583,50 +623,50 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
         </div>
       ),
     },
-    {
-      accessorKey: "ring",
-      header: "Ring",
-      cell: ({ row }) => (
-        <div className="flex items-center justify-center">
-          <span className="w-20 text-center text-xs font-semibold  truncate  rounded px-1 py-0.5 text-[#11181c] dark:text-white">
-            {row.original.ring.length > 20
-              ? row.original.ring.slice(0, 20) + "..."
-              : row.original.ring}
-          </span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "child_ring",
-      header: "Child Ring",
-      cell: ({ row }) => (
-        <div className="flex items-center justify-center">
-          <span className="w-20 text-center text-xs font-semibold  truncate  rounded px-1 py-0.5 text-[#11181c] dark:text-white">
-            {row.original.childRing.length > 20
-              ? row.original.childRing.slice(0, 20) + "..."
-              : row.original.childRing}
-          </span>
-        </div>
-      ),
-    },
+    // {
+    //   accessorKey: "ring",
+    //   header: "Ring",
+    //   cell: ({ row }) => (
+    //     <div className="flex items-center justify-center">
+    //       <span className="w-20 text-center text-xs font-semibold  truncate  rounded px-1 py-0.5 text-[#11181c] dark:text-white">
+    //         {row.original.Ring.length > 20
+    //           ? row.original.Ring.slice(0, 20) + "..."
+    //           : row.original.Ring}
+    //       </span>
+    //     </div>
+    //   ),
+    // },
+    // {
+    //   accessorKey: "child_ring",
+    //   header: "Child Ring",
+    //   cell: ({ row }) => (
+    //     <div className="flex items-center justify-center">
+    //       <span className="w-20 text-center text-xs font-semibold  truncate  rounded px-1 py-0.5 text-[#11181c] dark:text-white">
+    //         {row.original.Child_Ring.length > 20
+    //           ? row.original.Child_Ring.slice(0, 20) + "..."
+    //           : row.original.Child_Ring}
+    //       </span>
+    //     </div>
+    //   ),
+    // },
     {
       accessorKey: "video_name",
       header: "Video Name",
       cell: ({ row }) => (
         <Badge
           className={`text-xs ${
-            row.original.videoName === "-"
+            row.original.Video_Name === "-"
               ? "bg-[#fdd0df] text-[#c20e4d]"
               : "bg-[#d1f4e0] text-[#419967]"
           }`}
         >
-          {row.original.videoName === "-" ? (
+          {row.original.Video_Name === "-" ? (
             <span className="flex items-center gap-1">
               {" "}
               <XIcon size={14} /> Not Uploaded
             </span>
           ) : (
-            row.original.videoName
+            row.original.Video_Name
           )}
         </Badge>
       ),
@@ -636,10 +676,10 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
       header: "Duration",
       cell: ({ row }) => (
         <Badge variant={"secondary"}>
-          {row.original.duration > 0 ? (
+          {row.original.Video_Duration > 0 ? (
             <>
               <ClockIcon size={14} className="ml-1" />
-              {sumTimestamps(row.original.duration)}
+              {sumTimestamps(row.original.Video_Duration)}
             </>
           ) : (
             "00:00"
@@ -651,10 +691,10 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
       accessorKey: "uploaded_on",
       header: "Uploaded On",
       cell: ({ row }) => {
-        const date = moment(row.original.mobileVideoCaptureTime).format(
+        const date = moment(row.original.Mobile_Video_Capture_On).format(
           "DD MMM YYYY"
         );
-        const time = moment(row.original.mobileVideoCaptureTime).format(
+        const time = moment(row.original.Mobile_Video_Capture_On).format(
           "hh:mm:ss A"
         );
         return (
@@ -669,7 +709,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
       accessorKey: "created_on",
       header: "Created On",
       cell: ({ row }) => {
-        const date = moment(row.original.createdOn).format("DD MMM YYYY");
+        const date = moment(row.original.Created_On).format("DD MMM YYYY");
         return (
           <Badge variant={"secondary"}>
             <CalendarIcon size={14} />
@@ -689,10 +729,10 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
               <AvatarFallback
                 className={`${color.bg} ${color.text} font-semibold`}
               >
-                {row.original.createdBy.charAt(0).toUpperCase()}
+                {row.original.Created_By.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <p className="text-xs">{row.original.createdBy}</p>
+            <p className="text-xs">{row.original.Created_By}</p>
           </div>
         );
       },
@@ -705,13 +745,13 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
           <Badge
             variant="secondary"
             className={`${
-              row.original.verifiedStates === "APPROVED"
+              row.original.Verified_States === "APPROVED"
                 ? "bg-blue-500 dark:bg-blue-600"
                 : "bg-orange-500 dark:bg-orange-600"
             }  text-xs text-white`}
           >
             <BadgeCheckIcon size={14} />
-            {row.original.verifiedStatus === "APPROVED"
+            {row.original.Verified_Status === "APPROVED"
               ? "APPROVED"
               : "PENDING"}
           </Badge>
@@ -726,41 +766,41 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
           <Badge className="bg-[#fdd0df] text-[#c20e4d]">
             <CalendarIcon size={14} />
             <span>
-              {row.original.verifiedOn
-                ? moment(row.original.verifiedOn).format("DD MMM YYYY")
+              {row.original.Verified_On
+                ? moment(row.original.Verified_On).format("DD MMM YYYY")
                 : "Not Verified"}
             </span>
           </Badge>
         );
       },
     },
-    {
-      accessorKey: "verified_by",
-      header: "Verified By",
-      cell: ({ row }) => {
-        const color = getRandomAvatarColor();
-        return (
-          <div className="flex items-center justify-center">
-            {row.original.verifiedBy ? (
-              <div className="flex items-center gap-2">
-                <Avatar className="w-6 h-6 text-xs flex items-center justify-center">
-                  <AvatarFallback
-                    className={`${color.bg} ${color.text} font-semibold`}
-                  >
-                    {row.original.verifiedBy.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <p className="text-xs">{row.original.verifiedBy}</p>
-              </div>
-            ) : (
-              <Badge className="bg-[#fdd0df] text-[#c20e4d]">
-                <XIcon size={14} /> Not Verified
-              </Badge>
-            )}
-          </div>
-        );
-      },
-    },
+    // {
+    //   accessorKey: "verified_by",
+    //   header: "Verified By",
+    //   cell: ({ row }) => {
+    //     const color = getRandomAvatarColor();
+    //     return (
+    //       <div className="flex items-center justify-center">
+    //         {row.original.verifiedBy ? (
+    //           <div className="flex items-center gap-2">
+    //             <Avatar className="w-6 h-6 text-xs flex items-center justify-center">
+    //               <AvatarFallback
+    //                 className={`${color.bg} ${color.text} font-semibold`}
+    //               >
+    //                 {row.original.verifiedBy.charAt(0).toUpperCase()}
+    //               </AvatarFallback>
+    //             </Avatar>
+    //             <p className="text-xs">{row.original.verifiedBy}</p>
+    //           </div>
+    //         ) : (
+    //           <Badge className="bg-[#fdd0df] text-[#c20e4d]">
+    //             <XIcon size={14} /> Not Verified
+    //           </Badge>
+    //         )}
+    //       </div>
+    //     );
+    //   },
+    // },
   ];
 
   const table = useReactTable({

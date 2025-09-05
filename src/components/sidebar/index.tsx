@@ -216,22 +216,6 @@ export function AppSidebar({
                     </a>
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarMenuSub>
-                    {surveys.map((survey) => (
-                      <SidebarMenuSubItem key={survey.id}>
-                        <SidebarMenuSubButton
-                          asChild
-                          isActive={surveyId === survey.id}
-                        >
-                          <Link href={`/video/${survey.id}`}>
-                            <span>{survey.name}</span>
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    ))}
-                  </SidebarMenuSub>
-                </CollapsibleContent>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroup>
@@ -257,10 +241,14 @@ export function AppSidebar({
       <SidebarFooter>
         <NavUser
           user={{
-            user_id: user.user_id,
-            username: user.username,
-            email: user.email,
-            role: user.role,
+            User_id: user.User_id,
+            User_Name: user.User_Name,
+            User_Email: user.User_Email,
+            User_Role: user.User_Role,
+            First_Name: user.First_Name,
+            Last_Name: user.Last_Name,
+            Session_ID: user.Session_ID,
+            Agency_Name: user.Agency_Name,
           }}
         />
       </SidebarFooter>

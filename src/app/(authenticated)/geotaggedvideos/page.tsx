@@ -1,4 +1,4 @@
-import { getVideoList } from "@/components/sidebar/action";
+import { postData } from "@/app/actions/postdata";
 import SurveyTable from "@/components/survey-table";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -23,7 +23,7 @@ const Page = async () => {
   await queryClient.prefetchQuery({
     queryKey: ["videos", 1, {}],
     queryFn: async () => {
-      const data = await getVideoList({}, 1, 10);
+      const data = await postData("/api/Video/GetVideoList");
       return JSON.parse(data.data).Result;
     },
   });

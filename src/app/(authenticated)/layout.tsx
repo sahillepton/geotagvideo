@@ -16,10 +16,14 @@ const Layout = async ({ children }: { children: React.ReactNode }) => {
       {user && userData && (
         <AppSidebar
           user={{
-            user_id: userData.user_id,
-            username: userData.username,
-            email: userData.email,
-            role: userData.role,
+            User_Name: userData.User_Name,
+            User_id: userData.User_id,
+            First_Name: userData.First_Name,
+            Last_Name: userData.Last_Name,
+            User_Email: userData.User_Email,
+            Session_ID: userData.Session_ID,
+            Agency_Name: userData.Agency_Name,
+            User_Role: userData.User_Role,
           }}
         />
       )}

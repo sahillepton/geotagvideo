@@ -36,15 +36,15 @@ export function NavUser({ user }: { user: User }) {
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage
                   src={"https://github.com/shadcn.png"}
-                  alt={user.username}
+                  alt={user.User_Name}
                 />
                 <AvatarFallback className="rounded-lg">
-                  {user.username.charAt(0)}
+                  {user.User_Name.charAt(0)}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.username}</span>
-                <span className="truncate text-xs">{user.email}</span>
+                <span className="truncate font-medium">{user.User_Name}</span>
+                <span className="truncate text-xs">{user.User_Email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -60,15 +60,15 @@ export function NavUser({ user }: { user: User }) {
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage
                     src={"https://github.com/shadcn.png"}
-                    alt={user.username}
+                    alt={user.User_Name}
                   />
                   <AvatarFallback className="rounded-lg">
-                    {user.username.charAt(0)}
+                    {user.User_Name.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.username}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="truncate font-medium">{user.User_Name}</span>
+                  <span className="truncate text-xs">{user.User_Email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
