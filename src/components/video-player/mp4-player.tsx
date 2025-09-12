@@ -957,7 +957,7 @@ const SimpleMap = ({
         <div>Lat: {coords.lat}</div>
         <div>Lng: {coords.lng}</div>
         <div>Distance: {distance} m</div>
-        <div>Accuracy: {accuracy} cm</div>
+        {/* <div>Accuracy: {accuracy} cm</div> */}
       </div>
       <div
         ref={mapRef}

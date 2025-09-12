@@ -50,6 +50,20 @@ const VideoPage = async ({
 
   //  console.log(videoData, "videoData");
 
+  if (!videoData.mux_playback_id) {
+    return (
+      <div className="flex flex-col justify-center items-center h-screen">
+        <h1 className="text-2xl font-bold">Video is still processing</h1>
+        <Link
+          href="/geotaggedvideos"
+          className="text-gray-800 hover:text-gray-600 underline text-sm"
+        >
+          Go back to surveys?
+        </Link>
+      </div>
+    );
+  }
+
   if (!videoData?.url && !videoData?.mux_playback_id) {
     return (
       <div className="flex flex-col justify-center items-center h-screen gap-4">
