@@ -7,6 +7,8 @@ import * as THREE from "three";
 import Hls from "hls.js";
 import { PanelGroup, Panel, PanelResizeHandle } from "react-resizable-panels";
 import { XR, createXRStore } from "@react-three/xr";
+import dynamic from "next/dynamic";
+
 // Google Maps will be loaded via window.google
 declare global {
   interface Window {
@@ -1395,7 +1397,7 @@ const SimpleMap = ({
 };
 
 // --- Main Component ---
-export default function VideoWithMap({
+function VideoWithMap({
   videoUrl,
   locationData,
   initialX,
@@ -1466,3 +1468,5 @@ export default function VideoWithMap({
     </PanelGroup>
   );
 }
+
+export default dynamic(() => Promise.resolve(VideoWithMap), { ssr: false });

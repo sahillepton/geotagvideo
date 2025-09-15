@@ -4,6 +4,7 @@ import "./globals.css";
 import ReactQueryProvider from "@/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
+import Script from "next/script";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -24,13 +25,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
-        <script
-          async
-          defer
+        <Script
           src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=geometry`}
-        ></script>
+          strategy="afterInteractive"
+        />
       </head>
       <meta
         name="google-site-verification"
