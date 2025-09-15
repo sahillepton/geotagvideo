@@ -116,7 +116,7 @@ const PreviewPage = async ({
           </div>
         }
       >
-        <div className=" mt-4">
+        <div className="mt-4">
           <VideoWithMap
             videoUrl={
               videoData.mux_playback_id.includes(".m3u8")

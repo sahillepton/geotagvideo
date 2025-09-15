@@ -582,13 +582,13 @@ const VideoPlayer = ({
       </div>
 
       {/* Geolocation Info Card */}
-      <Card className="z-[9999] w-[230px] absolute top-2 left-2 shadow-lg rounded-2xl border border-neutral-200 bg-white/70 backdrop-blur-md">
+      <Card className="z-[9999] absolute top-2 left-2 shadow-lg rounded-2xl border border-neutral-200 bg-white/70 backdrop-blur-md">
         <CardContent className="pl-2 pr-2 pt-0 pb-0 text-sm text-neutral-700">
           {/* Time */}
-          <div className="flex items-center gap-2">
+          {/* <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-neutral-500" />
             <span className="truncate">{formatTime(currentTime)}</span>
-          </div>
+          </div> */}
 
           {/* Lat / Lng */}
           <div className="flex items-center gap-2">
@@ -714,62 +714,6 @@ const SimpleMap = ({
   createdAt: string;
 }) => {
   // Check if we're on the client side
-  if (typeof window === "undefined") {
-    return <div>Loading map...</div>;
-  }
-
-  // Check if Google Maps is available
-  if (!window.google) {
-    return (
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#f0f0f0",
-          padding: "20px",
-          textAlign: "center",
-        }}
-      >
-        <div
-          style={{ marginBottom: "10px", fontSize: "16px", fontWeight: "500" }}
-        >
-          Google Maps not loaded
-        </div>
-        <div style={{ fontSize: "14px", color: "#666", maxWidth: "400px" }}>
-          Please add your Google Maps API key to the environment variables.
-          <br />
-          <br />
-          1. Get an API key from Google Cloud Console
-          <br />
-          2. Enable Maps JavaScript API and Geometry Library
-          <br />
-          3. Add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to your .env.local file
-        </div>
-      </div>
-    );
-  }
-
-  // Show loading state if no data
-  if (!data || data.length === 0) {
-    return (
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#f0f0f0",
-        }}
-      >
-        <div>No GPS data available</div>
-      </div>
-    );
-  }
 
   const mapRef = useRef<HTMLDivElement>(null);
   const movingMarkerRef = useRef<any>(null);
@@ -1291,9 +1235,66 @@ const SimpleMap = ({
     return `${min}:${sec < 10 ? "0" : ""}${sec}`;
   };
 
+  if (typeof window === "undefined") {
+    return <div>Loading map...</div>;
+  }
+
+  // Check if Google Maps is available
+  if (!window.google) {
+    return (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#f0f0f0",
+          padding: "20px",
+          textAlign: "center",
+        }}
+      >
+        <div
+          style={{ marginBottom: "10px", fontSize: "16px", fontWeight: "500" }}
+        >
+          Google Maps not loaded
+        </div>
+        <div style={{ fontSize: "14px", color: "#666", maxWidth: "400px" }}>
+          Please add your Google Maps API key to the environment variables.
+          <br />
+          <br />
+          1. Get an API key from Google Cloud Console
+          <br />
+          2. Enable Maps JavaScript API and Geometry Library
+          <br />
+          3. Add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to your .env.local file
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading state if no data
+  if (!data || data.length === 0) {
+    return (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#f0f0f0",
+        }}
+      >
+        <div>No GPS data available</div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
-      <Card className="z-[9999] w-[230px] absolute top-2 left-2 shadow-lg rounded-2xl border border-neutral-200 bg-white/70 backdrop-blur-md">
+      <Card className="z-[9999] absolute top-2 left-2 shadow-lg rounded-2xl border border-neutral-200 bg-white/70 backdrop-blur-md">
         <CardContent className="pl-2 pr-2 pt-0 pb-0 text-sm text-neutral-700">
           {/* Time */}
           <div className="flex items-center gap-2">
