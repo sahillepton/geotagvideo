@@ -4,9 +4,7 @@ import { createClient } from "@/lib/supabase-server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import MP4VideoWithMap from "@/components/video-player/mp4-player";
 import { Badge } from "@/components/ui/badge";
-import Feedback from "../feedback";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeftIcon } from "lucide-react";
@@ -81,7 +79,7 @@ const PreviewPage = async ({
   }
 
   return (
-    <div className="px-4 ">
+    <div className="px-4 mt-4">
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-4">
           <Button variant="outline">
@@ -124,6 +122,7 @@ const PreviewPage = async ({
             locationData={surveyData?.gps_tracks?.location_data}
             initialX={x}
             initialY={y}
+            createdAt={videoData.created_at}
           />
         </div>
       </Suspense>
