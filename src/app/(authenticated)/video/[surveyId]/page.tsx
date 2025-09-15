@@ -49,7 +49,7 @@ const VideoPage = async ({
   const { data: surveyData, error: surveyError } = surveyResult;
 
   if (!videoData?.url) {
-    console.log("no video found for this survey");
+    // console.log("no video found for this survey");
     return (
       <div className="flex flex-col justify-center items-center h-screen gap-4">
         <Badge
@@ -69,7 +69,7 @@ const VideoPage = async ({
   }
 
   if (!videoData.mux_playback_id) {
-    console.log("video is still processing");
+    //  console.log("video is still processing");
     return (
       <div className="flex flex-col justify-center items-center h-screen">
         <h1 className="text-2xl font-bold">Video is still processing</h1>

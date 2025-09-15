@@ -12,7 +12,7 @@ const Layout = async ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider suppressHydrationWarning>
       {user && userData && (
         <AppSidebar
           user={{

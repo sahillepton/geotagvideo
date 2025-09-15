@@ -311,7 +311,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
     staleTime: 5000,
   });
 
-  console.log(data, "data");
+  // console.log(data, "data");
 
   const {
     data: states,
