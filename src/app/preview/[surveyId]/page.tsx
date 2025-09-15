@@ -118,7 +118,11 @@ const PreviewPage = async ({
       >
         <div className=" mt-4">
           <VideoWithMap
-            videoUrl={`https://stream.mux.com/${videoData.mux_playback_id}.m3u8`}
+            videoUrl={
+              videoData.mux_playback_id.includes(".m3u8")
+                ? videoData.mux_playback_id
+                : `https://stream.mux.com/${videoData.mux_playback_id}.m3u8`
+            }
             locationData={surveyData?.gps_tracks?.location_data}
             initialX={x}
             initialY={y}
