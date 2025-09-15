@@ -32,6 +32,10 @@ export default function RootLayout({
           src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=geometry`}
         ></script>
       </head>
+      <meta
+        name="google-site-verification"
+        content="63zpRfLJzhZtwfFcy4fO9KlUz8WdX-Iwp7ctUg5Fdrc"
+      />
       <body
         className={`${roboto.className} antialiased`}
         suppressHydrationWarning
