@@ -32,6 +32,7 @@ const PreviewPage = async ({
       .select(
         `
         id,
+        state,
         gps_track_id,
         gps_tracks(*)
       `
@@ -127,6 +128,7 @@ const PreviewPage = async ({
             initialX={x}
             initialY={y}
             createdAt={videoData.created_at}
+            state={surveyData?.state}
           />
         </div>
       </Suspense>

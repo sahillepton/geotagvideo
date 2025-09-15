@@ -708,10 +708,12 @@ const SimpleMap = ({
   data,
   video,
   createdAt,
+  state,
 }: {
   data: any[];
   video: HTMLVideoElement | null;
   createdAt: string;
+  state: string;
 }) => {
   // Check if we're on the client side
 
@@ -1331,10 +1333,12 @@ const SimpleMap = ({
           </div>
 
           {/* Accuracy */}
-                    <div className="flex items-center gap-2">
-            <Crosshair className="h-4 w-4 text-green-500" />
-            <span>{accuracy} m</span>
-          </div>
+          {state.toLowerCase() === "madhya pradesh" && (
+            <div className="flex items-center gap-2">
+              <Crosshair className="h-4 w-4 text-green-500" />
+              <span>{accuracy} m</span>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -1404,6 +1408,7 @@ function VideoWithMap({
   initialX,
   initialY,
   createdAt,
+  state,
 }) {
   //console.log(createdAt, "createdAt");
   const [video, setVideo] = useState(null);
@@ -1462,7 +1467,12 @@ function VideoWithMap({
       <Panel defaultSize={50} minSize={30}>
         <div className="w-full h-full rounded-xl overflow-hidden shadow-lg border border-gray-300">
           {video && (
-            <SimpleMap data={sortedData} video={video} createdAt={createdAt} />
+            <SimpleMap
+              data={sortedData}
+              video={video}
+              createdAt={createdAt}
+              state={state}
+            />
           )}
         </div>
       </Panel>
