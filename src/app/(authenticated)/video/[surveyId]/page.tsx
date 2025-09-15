@@ -127,6 +127,7 @@ const VideoPage = async ({
             locationData={surveyData?.gps_tracks?.location_data}
             initialX={x}
             initialY={y}
+            createdAt={videoData.created_at}
           />
         </div>
       </Suspense>

@@ -174,6 +174,7 @@ const VideoPlayer = ({
   setVideo,
   initialTimestamp = 1,
   locationData = [],
+  createdAt,
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -594,6 +595,20 @@ const VideoPlayer = ({
               {coords.lat}, {coords.lng}
             </span>
           </div>
+
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-neutral-500" />
+            <span className="truncate">
+              {new Date(createdAt).toISOString().split("T")[0]}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-neutral-500" />
+            <span className="truncate">
+              {new Date(createdAt).toISOString().split("T")[1].slice(0, 5)}
+            </span>
+          </div>
         </CardContent>
       </Card>
 
@@ -690,9 +705,11 @@ const VideoPlayer = ({
 const SimpleMap = ({
   data,
   video,
+  createdAt,
 }: {
   data: any[];
   video: HTMLVideoElement | null;
+  createdAt: string;
 }) => {
   // Check if we're on the client side
   if (typeof window === "undefined") {
@@ -1296,6 +1313,20 @@ const SimpleMap = ({
             <span>{distance} m</span>
           </div>
 
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-neutral-500" />
+            <span className="truncate">
+              {new Date(createdAt).toISOString().split("T")[0]}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-neutral-500" />
+            <span className="truncate">
+              {new Date(createdAt).toISOString().split("T")[1].slice(0, 5)}
+            </span>
+          </div>
+
           {/* Accuracy */}
           {/*           <div className="flex items-center gap-2">
             <Crosshair className="h-4 w-4 text-green-500" />
@@ -1369,6 +1400,7 @@ export default function VideoWithMap({
   locationData,
   initialX,
   initialY,
+  createdAt,
 }) {
   const [video, setVideo] = useState(null);
   const sortedData = useMemo(
@@ -1418,13 +1450,16 @@ export default function VideoWithMap({
             setVideo={setVideo}
             initialTimestamp={initialTimestamp}
             locationData={sortedData}
+            createdAt={createdAt}
           />
         </div>
       </Panel>
       <PanelResizeHandle className="w-2 cursor-col-resize bg-gray-200 hover:bg-gray-400 transition" />
       <Panel defaultSize={50} minSize={30}>
         <div className="w-full h-full rounded-xl overflow-hidden shadow-lg border border-gray-300">
-          {video && <SimpleMap data={sortedData} video={video} />}
+          {video && (
+            <SimpleMap data={sortedData} video={video} createdAt={createdAt} />
+          )}
         </div>
       </Panel>
     </PanelGroup>
