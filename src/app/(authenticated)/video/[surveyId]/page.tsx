@@ -48,23 +48,8 @@ const VideoPage = async ({
   const { data: videoData, error: videoError } = videoResult;
   const { data: surveyData, error: surveyError } = surveyResult;
 
-  //  console.log(videoData, "videoData");
-
-  if (!videoData.mux_playback_id) {
-    return (
-      <div className="flex flex-col justify-center items-center h-screen">
-        <h1 className="text-2xl font-bold">Video is still processing</h1>
-        <Link
-          href="/geotaggedvideos"
-          className="text-gray-800 hover:text-gray-600 underline text-sm"
-        >
-          Go back to surveys?
-        </Link>
-      </div>
-    );
-  }
-
-  if (!videoData?.url && !videoData?.mux_playback_id) {
+  if (!videoData?.url) {
+    console.log("no video found for this survey");
     return (
       <div className="flex flex-col justify-center items-center h-screen gap-4">
         <Badge
@@ -83,41 +68,19 @@ const VideoPage = async ({
     );
   }
 
-  if (videoData.mux_playback_id) {
-    //  console.log("getting mux status");'
-    try {
-      const id = videoData.mux_playback_id.substring(
-        videoData.mux_playback_id.lastIndexOf("/") + 1,
-        videoData.mux_playback_id.lastIndexOf(".")
-      );
-
-      const asset_data = await axios.get(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/mux-status/${id}`
-      );
-
-      if (asset_data.data.status !== "ready") {
-        return (
-          <div className="flex flex-col justify-center items-center h-screen">
-            <h1 className="text-2xl font-bold">Video is still processing</h1>
-            <Link
-              href="/geotaggedvideos"
-              className="text-gray-800 hover:text-gray-600 underline text-sm"
-            >
-              Go back to surveys?
-            </Link>
-          </div>
-        );
-      }
-
-      if (asset_data.data.status === "ready") {
-        await supabase
-          .from("videos")
-          .update({ status: "ready" })
-          .eq("id", videoData.id);
-      }
-    } catch (error) {
-      console.log(error, "error");
-    }
+  if (!videoData.mux_playback_id) {
+    console.log("video is still processing");
+    return (
+      <div className="flex flex-col justify-center items-center h-screen">
+        <h1 className="text-2xl font-bold">Video is still processing</h1>
+        <Link
+          href="/geotaggedvideos"
+          className="text-gray-800 hover:text-gray-600 underline text-sm"
+        >
+          Go back to surveys?
+        </Link>
+      </div>
+    );
   }
 
   return (
@@ -159,19 +122,13 @@ const VideoPage = async ({
         }
       >
         <div className=" mt-4">
-          {videoData.mux_playback_id ? (
-            <VideoWithMap
-              videoUrl={videoData.mux_playback_id}
-              locationData={surveyData?.gps_tracks?.location_data}
-              initialX={x}
-              initialY={y}
-            />
-          ) : (
-            <MP4VideoWithMap
-              videoUrl={videoData?.url}
-              locationData={surveyData?.gps_tracks?.location_data}
-            />
-          )}
+          {/* {videoData.mux_playback_id ? ( */}
+          <VideoWithMap
+            videoUrl={`https://stream.mux.com/${videoData.mux_playback_id}.m3u8`}
+            locationData={surveyData?.gps_tracks?.location_data}
+            initialX={x}
+            initialY={y}
+          />
         </div>
       </Suspense>
     </div>

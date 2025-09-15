@@ -35,28 +35,8 @@ const Page = async () => {
         <h1 className="text-4xl font-extrabold tracking-tight text-balance text-[#262626] dark:text-white">
           Geotagged Videos
         </h1>
-        <Suspense
-          fallback={
-            <div className="flex flex-col justify-center items-center h-screen">
-              <Badge
-                variant={"secondary"}
-                className="
-    text-2xl 
-    font-bold 
-    bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-200 
-    animate-pulse 
-    border-2 border-yellow-500 
-    text-yellow-800
-    shadow-lg
-    "
-              >
-                Fetching videos
-              </Badge>
-            </div>
-          }
-        >
-          <SurveyTable currentUser={userData} />
-        </Suspense>
+
+        <SurveyTable currentUser={userData} />
       </div>
     </HydrationBoundary>
   );

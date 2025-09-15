@@ -1194,7 +1194,7 @@ const SimpleMap = ({
           </div>
 
           {/* Accuracy */}
-{/*           <div className="flex items-center gap-2">
+          {/*           <div className="flex items-center gap-2">
             <Crosshair className="h-4 w-4 text-green-500" />
             <span>{accuracy} m</span>
           </div> */}
@@ -1267,7 +1267,6 @@ export default function VideoWithMap({
   initialX,
   initialY,
 }) {
-  // console.log(videoUrl, "videoUrl in video with map");
   const [video, setVideo] = useState(null);
   const sortedData = useMemo(
     () => locationData?.sort((a, b) => a.timestamp - b.timestamp) || [],

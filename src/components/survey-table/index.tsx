@@ -311,17 +311,32 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
     staleTime: 5000,
   });
 
-  const { data: states, isLoading: statesLoading } = useQuery({
+  const {
+    data: states,
+    isLoading: statesLoading,
+    refetch: refetchStates,
+  } = useQuery({
     queryKey: ["states"],
     queryFn: () => getStates(),
+    enabled: false,
   });
-  const { data: districts, isLoading: districtsLoading } = useQuery({
+  const {
+    data: districts,
+    isLoading: districtsLoading,
+    refetch: refetchDistricts,
+  } = useQuery({
     queryKey: ["districts"],
     queryFn: () => getDistricts(),
+    enabled: false,
   });
-  const { data: blocks, isLoading: blocksLoading } = useQuery({
+  const {
+    data: blocks,
+    isLoading: blocksLoading,
+    refetch: refetchBlocks,
+  } = useQuery({
     queryKey: ["blocks"],
     queryFn: () => getBlocks(),
+    enabled: false,
   });
 
   const handleStateChange = (value: string) => {
@@ -842,7 +857,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Popover>
+          <Popover onOpenChange={(open) => open && refetchStates()}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
@@ -880,7 +895,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
             </PopoverContent>
           </Popover>
 
-          <Popover>
+          <Popover onOpenChange={(open) => open && refetchDistricts()}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
@@ -920,7 +935,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
             </PopoverContent>
           </Popover>
 
-          <Popover>
+          <Popover onOpenChange={(open) => open && refetchBlocks()}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
