@@ -1,5 +1,4 @@
 //@ts-nocheck
-
 import VideoWithMap from "@/components/video-player";
 import { createClient } from "@/lib/supabase-server";
 import { cookies } from "next/headers";
@@ -8,6 +7,9 @@ import { Suspense } from "react";
 import MP4VideoWithMap from "@/components/video-player/mp4-player";
 import { Badge } from "@/components/ui/badge";
 import Feedback from "../feedback";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ArrowLeftIcon } from "lucide-react";
 
 const PreviewPage = async ({
   params,
