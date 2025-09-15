@@ -168,7 +168,13 @@ const VolumeProgressBar = ({ value, onChange, className = "" }) => {
 };
 
 // --- Video Player ---
-const VideoPlayer = ({ url, video, setVideo, initialTimestamp = 1 }) => {
+const VideoPlayer = ({
+  url,
+  video,
+  setVideo,
+  initialTimestamp = 1,
+  locationData = [],
+}) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [volume, setVolume] = useState(0.5);
@@ -180,8 +186,86 @@ const VideoPlayer = ({ url, video, setVideo, initialTimestamp = 1 }) => {
   const [isBuffering, setIsBuffering] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(false);
+  const [coords, setCoords] = useState({ lat: 0, lng: 0 });
+  const [distance, setDistance] = useState(0);
   const containerRef = useRef(null);
   const hideControlsTimeoutRef = useRef(null);
+
+  // Calculate distance between two coordinates
+  const calcDistance = (lat1, lng1, lat2, lng2) => {
+    const toRad = (v) => (v * Math.PI) / 180;
+    const R = 6371e3;
+    const φ1 = toRad(lat1);
+    const φ2 = toRad(lat2);
+    const Δφ = toRad(lat2 - lat1);
+    const Δλ = toRad(lng2 - lng1);
+    const a =
+      Math.sin(Δφ / 2) ** 2 +
+      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  // Update geolocation data based on current video time
+  useEffect(() => {
+    if (!video || !locationData?.length) return;
+
+    const updateLocation = () => {
+      const t = video.currentTime;
+
+      // Find two surrounding points
+      let prev = locationData[0];
+      let next = locationData[locationData.length - 1];
+
+      for (let i = 0; i < locationData.length - 1; i++) {
+        if (
+          parseFloat(locationData[i].timeStamp) <= t &&
+          t <= parseFloat(locationData[i + 1].timeStamp)
+        ) {
+          prev = locationData[i];
+          next = locationData[i + 1];
+          break;
+        }
+      }
+
+      const ratio =
+        (t - parseFloat(prev.timeStamp)) /
+        (parseFloat(next.timeStamp) - parseFloat(prev.timeStamp));
+
+      const lat =
+        parseFloat(prev.Latitude) +
+        ratio * (parseFloat(next.Latitude) - parseFloat(prev.Latitude));
+      const lng =
+        parseFloat(prev.Longitude) +
+        ratio * (parseFloat(next.Longitude) - parseFloat(prev.Longitude));
+
+      setCoords({ lat: lat.toFixed(6), lng: lng.toFixed(6) });
+
+      // Calculate distance from start point
+      const dist = calcDistance(
+        parseFloat(locationData[0].Latitude),
+        parseFloat(locationData[0].Longitude),
+        lat,
+        lng
+      );
+      setDistance(dist.toFixed(1));
+    };
+
+    // Update location when video time changes
+    const handleTimeUpdate = () => updateLocation();
+    const handleSeeked = () => updateLocation();
+
+    video.addEventListener("timeupdate", handleTimeUpdate);
+    video.addEventListener("seeked", handleSeeked);
+
+    // Initial update
+    updateLocation();
+
+    return () => {
+      video.removeEventListener("timeupdate", handleTimeUpdate);
+      video.removeEventListener("seeked", handleSeeked);
+    };
+  }, [video, locationData]);
 
   // Initialize video
   useEffect(() => {
@@ -493,6 +577,25 @@ const VideoPlayer = ({ url, video, setVideo, initialTimestamp = 1 }) => {
           </XR>
         </Canvas>
       </div>
+
+      {/* Geolocation Info Card */}
+      <Card className="z-[9999] w-[230px] absolute top-2 left-2 shadow-lg rounded-2xl border border-neutral-200 bg-white/70 backdrop-blur-md">
+        <CardContent className="pl-2 pr-2 pt-0 pb-0 text-sm text-neutral-700">
+          {/* Time */}
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-neutral-500" />
+            <span className="truncate">{formatTime(currentTime)}</span>
+          </div>
+
+          {/* Lat / Lng */}
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-red-500" />
+            <span className="truncate">
+              {coords.lat}, {coords.lng}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* <VRButton /> */}
       {isBuffering && (
@@ -1314,6 +1417,7 @@ export default function VideoWithMap({
             video={video}
             setVideo={setVideo}
             initialTimestamp={initialTimestamp}
+            locationData={sortedData}
           />
         </div>
       </Panel>
