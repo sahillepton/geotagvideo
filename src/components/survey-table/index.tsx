@@ -311,6 +311,8 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
     staleTime: 5000,
   });
 
+  console.log(data, "data");
+
   const {
     data: states,
     isLoading: statesLoading,
@@ -629,7 +631,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
       header: "Video Name",
       cell: ({ row }) => (
         <Badge
-          className={`text-xs ${
+          className={`text-xs flex items-center ${
             row.original.videoName === "-"
               ? "bg-[#fdd0df] text-[#c20e4d]"
               : "bg-[#d1f4e0] text-[#419967]"
@@ -699,7 +701,10 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
       cell: ({ row }) => {
         const color = getRandomAvatarColor();
         return (
-          <div className="flex items-center justify-center">
+          <div
+            className="flex items-center justify-center"
+            title={row.original.createdBy}
+          >
             <Avatar className="w-6 h-6 text-xs flex items-center justify-center mr-2">
               <AvatarFallback
                 className={`${color.bg} ${color.text} font-semibold`}
@@ -707,7 +712,9 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
                 {row.original.createdBy.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <p className="text-xs">{row.original.createdBy}</p>
+            <p className="text-xs w-24 truncate text-center">
+              {row.original.createdBy}
+            </p>
           </div>
         );
       },

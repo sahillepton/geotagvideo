@@ -122,7 +122,6 @@ const VideoPage = async ({
         }
       >
         <div className=" mt-4">
-          {/* {videoData.mux_playback_id ? ( */}
           <VideoWithMap
             videoUrl={`https://stream.mux.com/${videoData.mux_playback_id}.m3u8`}
             locationData={surveyData?.gps_tracks?.location_data}

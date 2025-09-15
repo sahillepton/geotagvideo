@@ -162,7 +162,7 @@ export async function getVideoList(filters : VideoListFilters, page = 1, pageSiz
     const supabase = await createClient();
     let query = supabase
       .from('surveys')
-      .select(`
+      .select(` 
         id,
         name,
         timestamp,
@@ -272,11 +272,10 @@ export async function getVideoList(filters : VideoListFilters, page = 1, pageSiz
         supabase.from('gps_tracks').select('id, entity_id, duration').in('id', gpsTrackIds) :
         { data: [] },
       userIds.length > 0 ?
-        supabase.from('users').select('user_name').in('user_id', userIds) :
+        supabase.from('users').select('username, user_id').in('user_id', userIds) :
         { data: [] }
     ]);
 
-  //  console.log(videosResponse.data, 'videosResponse')
 
     const videosMap = new Map(videosResponse.data?.map(v => [v.id, v]) || []);
     const gpsTracksMap = new Map(gpsTracksResponse.data?.map(g => [g.id, g]) || []);
