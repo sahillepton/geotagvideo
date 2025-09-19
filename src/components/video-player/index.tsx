@@ -1333,7 +1333,7 @@ const SimpleMap = ({
           </div>
 
           {/* Accuracy */}
-          {state.toLowerCase() === "madhya pradesh" && (
+          {state?.toLowerCase() === "madhya pradesh" && (
             <div className="flex items-center gap-2">
               <Crosshair className="h-4 w-4 text-green-500" />
               <span>{accuracy} m</span>
