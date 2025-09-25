@@ -1,17 +1,13 @@
-//@ts-nocheck
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import VideoWithMap from "@/components/video-player";
-import MP4VideoWithMap from "@/components/video-player/mp4-player";
+import VideoWithMapClient from "@/components/video-player-client";
 import { createClient } from "@/lib/supabase-server";
-import { ArrowLeftIcon, PlusIcon } from "lucide-react";
+import { ArrowLeftIcon } from "lucide-react";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import axios from "axios";
-
-export const experimental_ppr = true;
 
 const VideoPage = async ({
   params,
@@ -49,10 +45,6 @@ const VideoPage = async ({
   const { data: videoData, error: videoError } = videoResult;
   const { data: surveyData, error: surveyError } = surveyResult;
 
-  console.log(videoData);
-  console.log(surveyData);
-  console.log(videoError);
-  console.log(surveyError);
   if (!videoData?.url) {
     // console.log("no video found for this survey");
     return (
@@ -106,41 +98,20 @@ const VideoPage = async ({
           {videoData.name}
         </h1>
       </div>
-      <Suspense
-        fallback={
-          <div className="flex flex-col justify-center items-center h-screen">
-            <Badge
-              variant={"secondary"}
-              className="
-    text-2xl 
-    font-bold 
-    bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-200 
-    animate-pulse 
-    border-2 border-yellow-500 
-    text-yellow-800
-    shadow-lg
-    "
-            >
-              Fetching video and GPS tracks
-            </Badge>
-          </div>
-        }
-      >
-        <div className=" mt-4">
-          <VideoWithMap
-            videoUrl={
-              videoData.mux_playback_id.includes(".m3u8")
-                ? videoData.mux_playback_id
-                : `https://stream.mux.com/${videoData.mux_playback_id}.m3u8`
-            }
-            locationData={surveyData?.gps_tracks?.location_data}
-            initialX={x}
-            initialY={y}
-            createdAt={videoData.created_at}
-            state={surveyData?.state}
-          />
-        </div>
-      </Suspense>
+      <div className=" mt-4">
+        <VideoWithMapClient
+          videoUrl={
+            videoData.mux_playback_id.includes(".m3u8")
+              ? videoData.mux_playback_id
+              : `https://stream.mux.com/${videoData.mux_playback_id}.m3u8`
+          }
+          locationData={surveyData?.gps_tracks?.location_data}
+          initialX={x}
+          initialY={y}
+          createdAt={videoData.created_at}
+          state={surveyData?.state}
+        />
+      </div>
     </div>
   );
 };

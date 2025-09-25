@@ -28,11 +28,14 @@ export async function GET(
     const playbackData = playbackRes.data;
   
     const asset_id = playbackData.data.object.id;
+    console.log(asset_id, "asset_id");
   
     const asset_url = `https://api.mux.com/video/v1/assets/${asset_id}`;
     const assetRes = await axios.get(asset_url, { headers });
   
     const asset_data = assetRes.data;
+
+    console.log(asset_data, "asset_data");
   
     return NextResponse.json({
       message: "Mux status fetched",
