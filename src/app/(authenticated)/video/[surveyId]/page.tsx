@@ -49,10 +49,10 @@ const VideoPage = async ({
   const { data: videoData, error: videoError } = videoResult;
   const { data: surveyData, error: surveyError } = surveyResult;
 
-  console.log(videoData);
-  console.log(surveyData);
-  console.log(videoError);
-  console.log(surveyError);
+  // console.log(videoData);
+  //console.log(surveyData);
+  // console.log(videoError);
+  //console.log(surveyError);
   if (!videoData?.url) {
     // console.log("no video found for this survey");
     return (

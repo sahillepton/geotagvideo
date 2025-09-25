@@ -58,7 +58,7 @@ import {
   Crosshair,
 } from "lucide-react";
 
-// --- VideoSphere ---
+// --- Optimized VideoSphere ---
 const store = createXRStore();
 const VideoSphere = ({ video }) => {
   const sphere = useRef();
@@ -70,7 +70,8 @@ const VideoSphere = ({ video }) => {
 
   return (
     <mesh ref={sphere}>
-      <sphereGeometry args={[500, 64, 64]} />
+      {/* Reduced geometry complexity for better performance */}
+      <sphereGeometry args={[500, 32, 24]} />
       <meshBasicMaterial side={THREE.BackSide} map={texture} />
     </mesh>
   );
@@ -191,6 +192,9 @@ const VideoPlayer = ({
   const [showControls, setShowControls] = useState(false);
   const [coords, setCoords] = useState({ lat: 0, lng: 0 });
   const [distance, setDistance] = useState(0);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [loadProgress, setLoadProgress] = useState(0);
+  const [loadStartTime, setLoadStartTime] = useState(Date.now());
   const containerRef = useRef(null);
   const hideControlsTimeoutRef = useRef(null);
 
@@ -270,7 +274,7 @@ const VideoPlayer = ({
     };
   }, [video, locationData]);
 
-  // Initialize video
+  // Initialize video with optimized loading
   useEffect(() => {
     if (video) return;
 
@@ -279,9 +283,27 @@ const VideoPlayer = ({
     videoEl.playsInline = true;
     videoEl.volume = volume;
     videoEl.muted = true; // Ensure video starts unmuted
+    videoEl.preload = "metadata"; // Only load metadata initially
 
     if (Hls.isSupported()) {
-      const hls = new Hls({ autoStartLoad: true });
+      const hls = new Hls({
+        // Optimized HLS configuration for faster initial loading
+        maxBufferSize: 10, // Reduced from 30
+        autoStartLoad: true,
+        maxMaxBufferLength: 30, // Reduced from 60
+        maxBufferLength: 20, // New: limit buffer length
+        maxBufferHole: 0.5, // New: reduce buffer holes
+        highBufferWatchdogPeriod: 2, // New: faster buffer monitoring
+        nudgeOffset: 0.1, // New: reduce nudge offset
+        nudgeMaxRetry: 3, // New: limit retry attempts
+        maxFragLookUpTolerance: 0.25, // New: faster fragment lookup
+        liveSyncDurationCount: 1, // New: reduce live sync
+        liveMaxLatencyDurationCount: 2, // New: reduce latency
+        // Preloading optimizations
+        startLevel: -1, // Start with lowest quality for faster initial load
+        capLevelToPlayerSize: true, // Limit quality to player size
+        startFragPrefetch: true, // Prefetch first fragment
+      });
       hls.loadSource(url);
       hls.attachMedia(videoEl);
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -290,6 +312,10 @@ const VideoPlayer = ({
           index: idx,
         }));
         setQualities([{ label: "Auto", index: -1 }, ...levels]);
+        // Switch to auto quality after initial load
+        setTimeout(() => {
+          hls.currentLevel = -1;
+        }, 2000);
       });
       videoEl.hls = hls;
     } else {
@@ -300,12 +326,37 @@ const VideoPlayer = ({
 
     // Start playing when video is ready
     videoEl.addEventListener("loadedmetadata", () => {
+      setIsInitializing(false);
+      setLoadProgress(100);
+      const loadTime = Date.now() - loadStartTime;
+      console.log(`Video loaded in ${loadTime}ms`); // Performance logging
       // Set initial timestamp if provided
       if (initialTimestamp > 0) {
         videoEl.currentTime = initialTimestamp;
       }
       // Auto-play when metadata is loaded
       videoEl.play().catch(console.warn);
+    });
+
+    // Track loading progress
+    videoEl.addEventListener("loadstart", () => {
+      setIsInitializing(true);
+      setLoadProgress(0);
+      setLoadStartTime(Date.now());
+    });
+
+    videoEl.addEventListener("progress", () => {
+      if (videoEl.buffered.length > 0) {
+        const bufferedEnd = videoEl.buffered.end(videoEl.buffered.length - 1);
+        const duration = videoEl.duration;
+        if (duration > 0) {
+          setLoadProgress((bufferedEnd / duration) * 100);
+        }
+      }
+    });
+
+    videoEl.addEventListener("canplay", () => {
+      setLoadProgress(100);
     });
 
     return () => {
@@ -571,7 +622,16 @@ const VideoPlayer = ({
       }}
     >
       <div onClick={togglePlay} style={{ width: "100%", height: "100%" }}>
-        <Canvas camera={{ position: [0, 0, 0.1], fov: 75 }}>
+        <Canvas
+          camera={{ position: [0, 0, 0.1], fov: 75 }}
+          dpr={[1, 2]} // Limit pixel ratio for better performance
+          performance={{ min: 0.5 }} // Reduce frame rate when needed
+          gl={{
+            antialias: false, // Disable antialiasing for better performance
+            alpha: false,
+            powerPreference: "high-performance",
+          }}
+        >
           <XR store={store}>
             <OrbitControls enableZoom={false} enablePan={false} />
             <Suspense fallback={null}>
@@ -614,8 +674,32 @@ const VideoPlayer = ({
         </CardContent>
       </Card>
 
-      {/* <VRButton /> */}
-      {isBuffering && (
+      {/* Initial Loading Screen */}
+      {isInitializing && (
+        <div className="absolute inset-0 flex flex-col justify-center items-center bg-black/90 text-white z-50 gap-4">
+          <div className="w-16 h-16 border-4 border-gray-300 border-t-white rounded-full animate-spin" />
+          <div className="text-center">
+            <div className="text-xl font-semibold mb-2">
+              Loading Video Player
+            </div>
+            <div className="text-sm text-gray-300 mb-3">
+              Preparing your 360° experience...
+            </div>
+            <div className="w-64 bg-gray-700 rounded-full h-2">
+              <div
+                className="bg-white h-2 rounded-full transition-all duration-300"
+                style={{ width: `${loadProgress}%` }}
+              />
+            </div>
+            <div className="text-xs text-gray-400 mt-2">
+              {Math.round(loadProgress)}% loaded
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Buffering Indicator */}
+      {isBuffering && !isInitializing && (
         <div className="absolute inset-0 flex flex-col justify-center items-center bg-black/70 text-white z-50 gap-3">
           <Loader2 className="w-10 h-10 animate-spin" />
           <span>Buffering...</span>

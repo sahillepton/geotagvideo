@@ -8,7 +8,7 @@ import { PanelGroup, Panel, PanelResizeHandle } from "react-resizable-panels";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// --- VideoSphere for MP4 ---
+// --- Optimized VideoSphere for MP4 ---
 const VideoSphere = ({ video }) => {
   const sphere = useRef();
   const texture = useMemo(() => new THREE.VideoTexture(video), [video]);
@@ -19,7 +19,8 @@ const VideoSphere = ({ video }) => {
 
   return (
     <mesh ref={sphere}>
-      <sphereGeometry args={[500, 64, 64]} />
+      {/* Reduced geometry complexity for better performance */}
+      <sphereGeometry args={[500, 32, 24]} />
       <meshBasicMaterial side={THREE.BackSide} map={texture} />
     </mesh>
   );
@@ -230,7 +231,16 @@ const MP4VideoPlayer = ({ url, video, setVideo }) => {
       }}
       onClick={togglePlay}
     >
-      <Canvas camera={{ position: [0, 0, 0.1], fov: 75 }}>
+      <Canvas
+        camera={{ position: [0, 0, 0.1], fov: 75 }}
+        dpr={[1, 2]} // Limit pixel ratio for better performance
+        performance={{ min: 0.5 }} // Reduce frame rate when needed
+        gl={{
+          antialias: false, // Disable antialiasing for better performance
+          alpha: false,
+          powerPreference: "high-performance",
+        }}
+      >
         <OrbitControls enableZoom={false} enablePan={false} />
         <Suspense fallback={null}>
           {video && <VideoSphere video={video} />}
