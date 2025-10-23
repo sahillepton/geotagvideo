@@ -49,6 +49,29 @@ const VideoPage = async ({
   const { data: videoData, error: videoError } = videoResult;
   const { data: surveyData, error: surveyError } = surveyResult;
 
+  // Parse location data if it's a JSON string
+  const parsedLocationData = (() => {
+    if (!surveyData?.gps_tracks?.location_data) return [];
+
+    try {
+      // If locationData is a string, parse it
+      if (typeof surveyData.gps_tracks.location_data === "string") {
+        const parsed = JSON.parse(surveyData.gps_tracks.location_data);
+        return Array.isArray(parsed) ? parsed : [];
+      }
+
+      // If it's already an array, return it
+      if (Array.isArray(surveyData.gps_tracks.location_data)) {
+        return surveyData.gps_tracks.location_data;
+      }
+
+      return [];
+    } catch (error) {
+      console.error("Error parsing location data:", error);
+      return [];
+    }
+  })();
+
   // console.log(videoData);
   //console.log(surveyData);
   // console.log(videoError);
@@ -127,18 +150,42 @@ const VideoPage = async ({
         }
       >
         <div className=" mt-4">
-          <VideoWithMap
-            videoUrl={
-              videoData.mux_playback_id.includes(".m3u8")
-                ? videoData.mux_playback_id
-                : `https://stream.mux.com/${videoData.mux_playback_id}.m3u8`
-            }
-            locationData={surveyData?.gps_tracks?.location_data}
-            initialX={x}
-            initialY={y}
-            createdAt={videoData.created_at}
-            state={surveyData?.state}
-          />
+          {parsedLocationData.length > 0 ? (
+            <VideoWithMap
+              videoUrl={
+                videoData.mux_playback_id.includes(".m3u8")
+                  ? videoData.mux_playback_id
+                  : `https://stream.mux.com/${videoData.mux_playback_id}.m3u8`
+              }
+              locationData={parsedLocationData}
+              initialX={x}
+              initialY={y}
+              createdAt={videoData.created_at}
+              state={surveyData?.state}
+            />
+          ) : (
+            <div className="flex flex-col justify-center items-center h-96 gap-4">
+              <Badge variant="secondary" className="text-lg font-semibold">
+                No GPS location data available
+              </Badge>
+              <p className="text-gray-600 text-center">
+                This video doesn't have GPS tracking data, but you can still
+                watch it.
+              </p>
+              <VideoWithMap
+                videoUrl={
+                  videoData.mux_playback_id.includes(".m3u8")
+                    ? videoData.mux_playback_id
+                    : `https://stream.mux.com/${videoData.mux_playback_id}.m3u8`
+                }
+                locationData={[]}
+                initialX={x}
+                initialY={y}
+                createdAt={videoData.created_at}
+                state={surveyData?.state}
+              />
+            </div>
+          )}
         </div>
       </Suspense>
     </div>

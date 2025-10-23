@@ -1494,40 +1494,61 @@ function VideoWithMap({
   createdAt,
   state,
 }) {
-  //console.log(createdAt, "createdAt");
   const [video, setVideo] = useState(null);
-  const sortedData = useMemo(
-    () => locationData?.sort((a, b) => a.timestamp - b.timestamp) || [],
-    [locationData]
-  );
+
+  // Location data is already parsed on the server-side
+  const sortedData = useMemo(() => {
+    if (!locationData || !Array.isArray(locationData)) return [];
+
+    const sorted = locationData.sort(
+      (a, b) => parseFloat(a.timeStamp) - parseFloat(b.timeStamp)
+    );
+    console.log("Sorted data:", sorted);
+    return sorted;
+  }, [locationData]);
 
   // Find the closest GPS point to initial coordinates if provided
   let initialTimestamp = 0;
-  if (initialX !== undefined && initialY !== undefined && sortedData?.length) {
+  if (
+    initialX !== undefined &&
+    initialY !== undefined &&
+    sortedData?.length &&
+    window.google?.maps
+  ) {
     let closestPoint = sortedData[0];
     let minDistance = Infinity;
 
-    sortedData.forEach((point) => {
-      const pointLatLng = new window.google.maps.LatLng(
-        parseFloat(point.Latitude),
-        parseFloat(point.Longitude)
-      );
-      const initialLatLng = new window.google.maps.LatLng(initialY, initialX); // Note: Y is lat, X is lng
-      const distance =
-        window.google.maps.geometry.spherical.computeDistanceBetween(
-          initialLatLng,
-          pointLatLng
-        );
+    try {
+      sortedData.forEach((point) => {
+        if (point.Latitude && point.Longitude) {
+          const pointLatLng = new window.google.maps.LatLng(
+            parseFloat(point.Latitude),
+            parseFloat(point.Longitude)
+          );
+          const initialLatLng = new window.google.maps.LatLng(
+            initialY,
+            initialX
+          ); // Note: Y is lat, X is lng
+          const distance =
+            window.google.maps.geometry.spherical.computeDistanceBetween(
+              initialLatLng,
+              pointLatLng
+            );
 
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestPoint = point;
-      }
-    });
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestPoint = point;
+          }
+        }
+      });
 
-    initialTimestamp = closestPoint?.timeStamp
-      ? parseFloat(closestPoint.timeStamp)
-      : 0;
+      initialTimestamp = closestPoint?.timeStamp
+        ? parseFloat(closestPoint.timeStamp)
+        : 0;
+    } catch (error) {
+      console.error("Error finding closest GPS point:", error);
+      initialTimestamp = 0;
+    }
   }
 
   return (
