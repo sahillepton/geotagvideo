@@ -7,6 +7,7 @@ import {
   ArrowRightIcon,
   DownloadIcon,
   Loader2,
+  MapIcon,
   MoreHorizontalIcon,
   PencilIcon,
 } from "lucide-react";
@@ -26,6 +27,8 @@ import {
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const RowAction = ({
   gpsTrackId,
@@ -38,6 +41,7 @@ const RowAction = ({
   routeName: string;
   role: string;
 }) => {
+  const router = useRouter();
   const [newRouteName, setNewRouteName] = useState(routeName);
   const queryClient = useQueryClient();
   const handleDownloadGeoJSON = async (gpsTrackId: string) => {
@@ -169,6 +173,22 @@ const RowAction = ({
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <Button
+          variant="ghost"
+          className="group w-full justify-between px-3 py-2 rounded-lg transition-all 
+                       hover:bg-accent hover:text-accent-foreground"
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(`/track/${surveyId}`);
+          }}
+        >
+          <span className="flex items-center">
+            <MapIcon className="w-4 h-4 mr-2 transition-colors group-hover:text-accent-foreground" />
+            View on Map
+          </span>
+          <ArrowRightIcon className="w-4 h-4 opacity-70 transition-all group-hover:translate-x-1 group-hover:text-accent-foreground" />
+        </Button>
       </PopoverContent>
     </Popover>
   );

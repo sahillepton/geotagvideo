@@ -801,6 +801,7 @@ const SimpleMap = ({
 }) => {
   // Check if we're on the client side
 
+
   const mapRef = useRef<HTMLDivElement>(null);
   const movingMarkerRef = useRef<any>(null);
   const startMarkerRef = useRef<any>(null);
