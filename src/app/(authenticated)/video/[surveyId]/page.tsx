@@ -40,7 +40,7 @@ const VideoPage = async ({
         state,
         gps_track_id,
         gps_tracks(*)
-      `
+      `,
       )
       .eq("id", surveyId)
       .single(),
@@ -135,11 +135,11 @@ const VideoPage = async ({
             <Badge
               variant={"secondary"}
               className="
-    text-2xl 
-    font-bold 
-    bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-200 
-    animate-pulse 
-    border-2 border-yellow-500 
+    text-2xl
+    font-bold
+    bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-200
+    animate-pulse
+    border-2 border-yellow-500
     text-yellow-800
     shadow-lg
     "

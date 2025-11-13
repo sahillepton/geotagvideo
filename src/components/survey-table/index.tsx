@@ -289,7 +289,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
       selectedDateFilter,
       dateFrom,
       dateTo,
-    ]
+    ],
   );
 
   const { status, data, error, isFetching, isPlaceholderData } = useQuery({
@@ -301,7 +301,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
         JSON.parse(data.data).Result.map((survey: any) => ({
           id: survey.surveyId,
           name: survey.routeName,
-        }))
+        })),
       );
       //   console.log(JSON.parse(data.data).Result, "data");
       setLoading(false);
@@ -417,7 +417,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
           totalPages - 3,
           totalPages - 2,
           totalPages - 1,
-          totalPages
+          totalPages,
         );
       } else {
         pages.push(1, "...", page - 1, page, page + 1, "...", totalPages);
@@ -475,7 +475,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
 
     return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
       2,
-      "0"
+      "0",
     )}`;
   }
 
@@ -527,7 +527,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
                 </div>
                 <div className="text-muted-foreground text-xs">
                   {moment(row.original.mobileVideoCaptureTime).format(
-                    "DD MMM YYYY"
+                    "DD MMM YYYY",
                   )}
                 </div>
               </div>
@@ -669,10 +669,10 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
       header: "Uploaded On",
       cell: ({ row }) => {
         const date = moment(row.original.mobileVideoCaptureTime).format(
-          "DD MMM YYYY"
+          "DD MMM YYYY",
         );
         const time = moment(row.original.mobileVideoCaptureTime).format(
-          "hh:mm:ss A"
+          "hh:mm:ss A",
         );
         return (
           <Badge variant={"secondary"}>
@@ -799,16 +799,20 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
     >
       <div className="mb-4 w-full flex justify-between">
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 border rounded-md w-64 h-8 p-2 bg-[#f4f4f5] dark:bg-[#11181c]">
-            <SearchIcon size={16} />
+          <div className="flex items-center gap-2 border border-gray-300 dark:border-gray-700 rounded-md w-64 h-8 p-2 bg-gray-100 dark:bg-gray-900">
+            <SearchIcon
+              size={16}
+              className="text-gray-500 dark:text-gray-400"
+            />
             <Input
               type="search"
               placeholder="Search for route name"
-              className="border-none ring-none shadow-none focus:border-none focus:ring-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="flex-1 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 border-none focus:ring-0 focus:border-none focus:outline-none p-0 h-auto"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+
           {(selectedState ||
             selectedDistrict ||
             selectedBlock ||
@@ -845,7 +849,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
                 .filter(
                   (column) =>
                     typeof column.accessorFn !== "undefined" &&
-                    column.getCanHide()
+                    column.getCanHide(),
                 )
                 .map((column) => {
                   return (
@@ -993,8 +997,8 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
                   {selectedDateFilter === "Mobile_Video_Capture_Time"
                     ? "Uploaded On"
                     : selectedDateFilter === "Created_On"
-                    ? "Created On"
-                    : "Date Filter"}
+                      ? "Created On"
+                      : "Date Filter"}
                 </span>
                 <ChevronDownIcon className="h-3 w-3 flex-shrink-0 ml-1" />
               </Button>
