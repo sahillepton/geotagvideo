@@ -29,6 +29,7 @@ import { Input } from "../ui/input";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { handleDownloadGeoJSON } from "@/lib/utils";
 
 const RowAction = ({
   gpsTrackId,
@@ -44,34 +45,6 @@ const RowAction = ({
   const router = useRouter();
   const [newRouteName, setNewRouteName] = useState(routeName);
   const queryClient = useQueryClient();
-  const handleDownloadGeoJSON = async (gpsTrackId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("gps_tracks")
-        .select("location_data, name")
-        .eq("id", gpsTrackId)
-        .single();
-      if (error) {
-        console.error("Error downloading GPS data as CSV:", error);
-        //toast.error("Failed to download location data");
-        return;
-      }
-      const csv = Papa.unparse(data.location_data);
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${data.name}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      //  toast.success(`${data.name} downloaded successfully`);
-    } catch (error) {
-      console.error("Error downloading GPS data as CSV:", error);
-      //toast.error("Failed to download location data");
-    }
-  };
 
   const { mutate: downloadSurvey, isPending: isDownloading } = useMutation({
     mutationKey: ["download-survey"],

@@ -74,6 +74,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
 } from "../ui/dropdown-menu";
+import { handleDownloadGeoJSON } from "@/lib/utils";
 
 // Define some color pairs
 const avatarColors = [
@@ -826,6 +827,19 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
         </div>
 
         <div className="flex items-center gap-2 h-8">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs"
+            onClick={async () => {
+              for (const survey of data) {
+                await handleDownloadGeoJSON(survey.gpsTrackId);
+              }
+            }}
+          >
+            <DownloadIcon size={14} /> Download
+          </Button>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
