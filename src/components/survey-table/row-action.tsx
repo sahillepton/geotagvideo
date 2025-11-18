@@ -29,7 +29,7 @@ import { Input } from "../ui/input";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { handleDownloadGeoJSON } from "@/lib/utils";
+import { handleDownloadGeoJSON, handleDownloadVideo } from "@/lib/utils";
 
 const RowAction = ({
   gpsTrackId,
@@ -93,7 +93,30 @@ const RowAction = ({
           variant="ghost"
           className="group w-full justify-between px-3 py-2 rounded-lg transition-all 
                        hover:bg-accent hover:text-accent-foreground"
-          onClick={() => downloadSurvey(gpsTrackId)}
+          onClick={async (e) => {
+            e.stopPropagation();
+            await handleDownloadVideo(surveyId);
+          }}
+        >
+          <span className="flex items-center">
+            {isDownloading ? (
+              <Loader2 className="w-4 h-4 mr-2 transition-colors group-hover:text-accent-foreground animate-spin" />
+            ) : (
+              <DownloadIcon className="w-4 h-4 mr-2 transition-colors group-hover:text-accent-foreground" />
+            )}
+            Download Video
+          </span>
+          <ArrowRightIcon className="w-4 h-4 opacity-70 transition-all group-hover:translate-x-1 group-hover:text-accent-foreground" />
+        </Button>
+
+        <Button
+          variant="ghost"
+          className="group w-full justify-between px-3 py-2 rounded-lg transition-all 
+                       hover:bg-accent hover:text-accent-foreground"
+          onClick={(e) => {
+            e.stopPropagation();
+            downloadSurvey(gpsTrackId);
+          }}
         >
           <span className="flex items-center">
             {isDownloading ? (

@@ -36,6 +36,7 @@
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.23.12",
+    "geojson-to-kml": "^0.0.1",
     "hls.js": "^1.6.10",
     "js-cookie": "^3.0.5",
     "leaflet": "^1.9.4",
@@ -54,6 +55,7 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
     "three": "^0.179.1",
+    "tokml": "^0.4.0",
     "zod": "^4.0.17",
     "zustand": "^5.0.8"
   },
