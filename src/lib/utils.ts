@@ -90,10 +90,8 @@ const downloadBlob = (blob: Blob, filename: string) => {
   document.body.appendChild(a);
   a.click();
 
-  setTimeout(() => {
-    URL.revokeObjectURL(url);
-    a.remove();
-  }, 500);
+  URL.revokeObjectURL(url);
+  a.remove();
 };
 
 /* ------------------------------ DOWNLOAD CSV ------------------------------- */
@@ -153,7 +151,7 @@ export const handleDownloadVideo = async (surveyId: string) => {
       .from("videos")
       .select("url, name")
       .eq("survey_id", surveyId)
-      .maybeSingle();
+      .single();
 
     if (error) {
       console.error("Error fetching video:", error);
@@ -165,28 +163,18 @@ export const handleDownloadVideo = async (surveyId: string) => {
       return;
     }
 
-    const response = await fetch(data.url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch video: ${response.statusText}`);
-    }
+    // Ensure file has .mp4 extension (optional)
+    const fileName = data.name?.endsWith(".mp4")
+      ? data.name
+      : `${data.name}.mp4`;
 
-    console.log(data.url);
-
-    const blob = await response.blob();
-
-    // infer extension
-    const mime = blob.type || "video/mp4";
-    let extension = "mp4";
-
-    if (mime.includes("webm")) extension = "webm";
-    else if (mime.includes("ogg")) extension = "ogg";
-    else if (mime.includes("mov") || mime.includes("quicktime"))
-      extension = "mov";
-    else if (mime.includes("avi")) extension = "avi";
-
-    const base = data.name?.replace(/\.[^/.]+$/, "") || `video_${surveyId}`;
-
-    downloadBlob(blob, `${base}.${extension}`);
+    const a = document.createElement("a");
+    a.href = data.url;
+    a.download = fileName;
+    a.target = "_blank"; // Helps some browsers force download
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   } catch (err) {
     console.error("Error downloading video:", err);
   }
