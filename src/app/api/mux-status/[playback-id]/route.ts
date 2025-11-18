@@ -12,28 +12,31 @@ export async function GET(
   { params }: { params: Promise<Params> }
 ) {
   const { "playback-id": playbackId } = await params;
-
+  console.log(playbackId);
   try {
     const url = `https://api.mux.com/video/v1/playback-ids/${playbackId}`;
 
-
     const headers = {
       Authorization:
-        "Basic " + Buffer.from(`${MUX_TOKEN_ID}:${MUX_TOKEN_SECRET}`).toString("base64"),
+        "Basic " +
+        Buffer.from(`${MUX_TOKEN_ID}:${MUX_TOKEN_SECRET}`).toString("base64"),
       "Content-Type": "application/json",
     };
 
     const playbackRes = await axios.get(url, { headers });
-  
+
     const playbackData = playbackRes.data;
-  
+
+    console.log(playbackData);
+
     const asset_id = playbackData.data.object.id;
-  
+
     const asset_url = `https://api.mux.com/video/v1/assets/${asset_id}`;
     const assetRes = await axios.get(asset_url, { headers });
-  
+
     const asset_data = assetRes.data;
-  
+    console.log(asset_data);
+
     return NextResponse.json({
       message: "Mux status fetched",
       asset_id,

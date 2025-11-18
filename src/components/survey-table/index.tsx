@@ -51,7 +51,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
 import { DateRangePicker } from "../sidebar/date-range-picker";
 import { User } from "@/lib/types";
-import { useSurveyStore } from "@/lib/store";
 
 import {
   getStateDistrictFromBlockName,
@@ -99,10 +98,10 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [selectedBlock, setSelectedBlock] = useState("");
   const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [selectedDateFilter, setSelectedDateFilter] = useState("");
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
-  const { setSurveys, setLoading } = useSurveyStore();
   const { open } = useSidebar();
 
   // Load all filters from localStorage on component mount
@@ -132,6 +131,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
 
       if (savedSearch) {
         setSearch(savedSearch);
+        setSearchInput(savedSearch);
       }
       if (savedState) {
         setSelectedState(savedState);
@@ -204,6 +204,17 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
     }
   };
 
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput);
+    }, 500); // 500ms debounce delay
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchInput]);
+
   // Save all filters to localStorage whenever they change
   useEffect(() => {
     saveFiltersToStorage();
@@ -242,6 +253,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
       setSelectedDistrict("");
       setSelectedBlock("");
       setSearch("");
+      setSearchInput("");
       setSelectedDateFilter("");
       setDateFrom(undefined);
       setDateTo(undefined);
@@ -296,16 +308,8 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
   const { status, data, error, isFetching, isPlaceholderData } = useQuery({
     queryKey: ["videos", page, filters],
     queryFn: async () => {
-      setLoading(true);
       const data = await getVideoList(filters, page, 10);
-      setSurveys(
-        JSON.parse(data.data).Result.map((survey: any) => ({
-          id: survey.surveyId,
-          name: survey.routeName,
-        }))
-      );
-      //   console.log(JSON.parse(data.data).Result, "data");
-      setLoading(false);
+
       return JSON.parse(data.data).Result;
     },
     placeholderData: keepPreviousData,
@@ -806,8 +810,8 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
               type="search"
               placeholder="Search for route name"
               className="border-none ring-none shadow-none focus:border-none focus:ring-none focus-visible:ring-0 focus-visible:ring-offset-0"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
             />
           </div>
           {(selectedState ||
@@ -837,7 +841,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
               }
             }}
           >
-            <DownloadIcon size={14} /> Download
+            <DownloadIcon size={14} />
           </Button>
 
           <DropdownMenu>
