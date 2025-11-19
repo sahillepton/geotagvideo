@@ -91,7 +91,7 @@ const RowAction = ({
       >
         <Button
           variant="ghost"
-          className="group w-full justify-between px-3 py-2 rounded-lg transition-all 
+          className="group w-full justify-between px-3 py-2 rounded-lg transition-all
                        hover:bg-accent hover:text-accent-foreground"
           onClick={async (e) => {
             e.stopPropagation();
@@ -99,11 +99,7 @@ const RowAction = ({
           }}
         >
           <span className="flex items-center">
-            {isDownloading ? (
-              <Loader2 className="w-4 h-4 mr-2 transition-colors group-hover:text-accent-foreground animate-spin" />
-            ) : (
-              <DownloadIcon className="w-4 h-4 mr-2 transition-colors group-hover:text-accent-foreground" />
-            )}
+            <DownloadIcon className="w-4 h-4 mr-2 transition-colors group-hover:text-accent-foreground" />
             Download Video
           </span>
           <ArrowRightIcon className="w-4 h-4 opacity-70 transition-all group-hover:translate-x-1 group-hover:text-accent-foreground" />
@@ -111,7 +107,7 @@ const RowAction = ({
 
         <Button
           variant="ghost"
-          className="group w-full justify-between px-3 py-2 rounded-lg transition-all 
+          className="group w-full justify-between px-3 py-2 rounded-lg transition-all
                        hover:bg-accent hover:text-accent-foreground"
           onClick={(e) => {
             e.stopPropagation();
@@ -136,7 +132,7 @@ const RowAction = ({
           >
             <Button
               variant="ghost"
-              className="group w-full justify-between px-3 py-2 rounded-lg transition-all 
+              className="group w-full justify-between px-3 py-2 rounded-lg transition-all
                        hover:bg-accent hover:text-accent-foreground"
             >
               <span className="flex items-center">
@@ -172,7 +168,7 @@ const RowAction = ({
 
         <Button
           variant="ghost"
-          className="group w-full justify-between px-3 py-2 rounded-lg transition-all 
+          className="group w-full justify-between px-3 py-2 rounded-lg transition-all
                        hover:bg-accent hover:text-accent-foreground"
           onClick={(e) => {
             e.stopPropagation();
