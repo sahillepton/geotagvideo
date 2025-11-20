@@ -22,40 +22,17 @@ import {
 import {
   BadgeCheckIcon,
   CalendarIcon,
-  ChevronDownIcon,
   ClockIcon,
   DownloadIcon,
-  Loader2,
   RouteIcon,
-  SearchIcon,
-  Settings2,
-  SquarePen,
   XIcon,
 } from "lucide-react";
 import moment from "moment";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Button } from "../ui/button";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import { Input } from "../ui/input";
-import { Command, CommandItem, CommandEmpty, CommandList } from "../ui/command";
-import { CommandInput } from "../ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
 import { DateRangePicker } from "../sidebar/date-range-picker";
 import { User } from "@/lib/types";
-
-import {
-  getStateDistrictFromBlockName,
-  getStateFromDistrictName,
-} from "@/lib/get-state-district";
 import RowAction from "./row-action";
 import { Badge } from "../ui/badge";
 import {
@@ -65,17 +42,22 @@ import {
 } from "../ui/hover-card";
 import Link from "next/link";
 import { useSidebar } from "../ui/sidebar";
-import {
-  DropdownMenu,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuCheckboxItem,
-} from "../ui/dropdown-menu";
 import { handleDownloadGeoJSON } from "@/lib/utils";
+import TablePagination from "./pagination";
+import ToggleColumns from "./toggle-columns";
+import LocationPopover from "./location-popover";
+import SearchBar from "./search-bar";
+import {
+  useDateFrom,
+  useDateTo,
+  usePage,
+  useSearch,
+  useSelectedBlock,
+  useSelectedDateFilter,
+  useSelectedDistrict,
+  useSelectedState,
+} from "@/lib/store";
 
-// Define some color pairs
 const avatarColors = [
   { bg: "bg-green-200", text: "text-green-800" },
   { bg: "bg-blue-200", text: "text-blue-800" },
@@ -92,177 +74,24 @@ const getRandomAvatarColor = () => {
 };
 
 export default function SurveyTable({ currentUser }: { currentUser: User }) {
-  const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
-  const [selectedState, setSelectedState] = useState("");
-  const [selectedDistrict, setSelectedDistrict] = useState("");
-  const [selectedBlock, setSelectedBlock] = useState("");
-  const [search, setSearch] = useState("");
-  const [searchInput, setSearchInput] = useState("");
-  const [selectedDateFilter, setSelectedDateFilter] = useState("");
-  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
-  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const { page, setPage } = usePage();
+  const { selectedState } = useSelectedState();
+  const { selectedDistrict } = useSelectedDistrict();
+  const { selectedBlock } = useSelectedBlock();
+  const { search } = useSearch();
+  const { selectedDateFilter } = useSelectedDateFilter();
+  const { dateFrom } = useDateFrom();
+  const { dateTo } = useDateTo();
   const { open } = useSidebar();
 
-  // Load all filters from localStorage on component mount
   useEffect(() => {
-    try {
-      // Load date filters
-      const savedDateFilter = localStorage.getItem("surveyTable_dateFilter");
-      const savedDateFrom = localStorage.getItem("surveyTable_dateFrom");
-      const savedDateTo = localStorage.getItem("surveyTable_dateTo");
-
-      if (savedDateFilter) {
-        setSelectedDateFilter(savedDateFilter);
-      }
-      if (savedDateFrom) {
-        setDateFrom(new Date(savedDateFrom));
-      }
-      if (savedDateTo) {
-        setDateTo(new Date(savedDateTo));
-      }
-
-      // Load other filters
-      const savedSearch = localStorage.getItem("surveyTable_search");
-      const savedState = localStorage.getItem("surveyTable_state");
-      const savedDistrict = localStorage.getItem("surveyTable_district");
-      const savedBlock = localStorage.getItem("surveyTable_block");
-      const savedPage = localStorage.getItem("surveyTable_page");
-
-      if (savedSearch) {
-        setSearch(savedSearch);
-        setSearchInput(savedSearch);
-      }
-      if (savedState) {
-        setSelectedState(savedState);
-      }
-      if (savedDistrict) {
-        setSelectedDistrict(savedDistrict);
-      }
-      if (savedBlock) {
-        setSelectedBlock(savedBlock);
-      }
-      if (savedPage) {
-        setPage(parseInt(savedPage, 10));
-      }
-    } catch (error) {
-      console.error("Error loading filters from localStorage:", error);
-    }
-  }, []);
-
-  // Save all filters to localStorage
-  const saveFiltersToStorage = () => {
-    try {
-      // Save date filters
-      if (selectedDateFilter) {
-        localStorage.setItem("surveyTable_dateFilter", selectedDateFilter);
-      } else {
-        localStorage.removeItem("surveyTable_dateFilter");
-      }
-
-      if (dateFrom) {
-        localStorage.setItem("surveyTable_dateFrom", dateFrom.toISOString());
-      } else {
-        localStorage.removeItem("surveyTable_dateFrom");
-      }
-
-      if (dateTo) {
-        localStorage.setItem("surveyTable_dateTo", dateTo.toISOString());
-      } else {
-        localStorage.removeItem("surveyTable_dateTo");
-      }
-
-      // Save other filters
-      if (search) {
-        localStorage.setItem("surveyTable_search", search);
-      } else {
-        localStorage.removeItem("surveyTable_search");
-      }
-
-      if (selectedState) {
-        localStorage.setItem("surveyTable_state", selectedState);
-      } else {
-        localStorage.removeItem("surveyTable_state");
-      }
-
-      if (selectedDistrict) {
-        localStorage.setItem("surveyTable_district", selectedDistrict);
-      } else {
-        localStorage.removeItem("surveyTable_district");
-      }
-
-      if (selectedBlock) {
-        localStorage.setItem("surveyTable_block", selectedBlock);
-      } else {
-        localStorage.removeItem("surveyTable_block");
-      }
-
-      // Save page number
-      localStorage.setItem("surveyTable_page", page.toString());
-    } catch (error) {
-      console.error("Error saving filters to localStorage:", error);
-    }
-  };
-
-  // Debounce search input
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearch(searchInput);
-    }, 500); // 500ms debounce delay
+    const timer = setTimeout(() => {}, 500); // 500ms debounce delay
 
     return () => {
       clearTimeout(timer);
     };
-  }, [searchInput]);
-
-  // Save all filters to localStorage whenever they change
-  useEffect(() => {
-    saveFiltersToStorage();
-  }, [
-    selectedDateFilter,
-    dateFrom,
-    dateTo,
-    search,
-    selectedState,
-    selectedDistrict,
-    selectedBlock,
-    page,
-  ]);
-
-  // Clear all filters from localStorage
-  const clearAllFiltersFromStorage = () => {
-    try {
-      localStorage.removeItem("surveyTable_dateFilter");
-      localStorage.removeItem("surveyTable_dateFrom");
-      localStorage.removeItem("surveyTable_dateTo");
-      localStorage.removeItem("surveyTable_search");
-      localStorage.removeItem("surveyTable_state");
-      localStorage.removeItem("surveyTable_district");
-      localStorage.removeItem("surveyTable_block");
-      localStorage.removeItem("surveyTable_page");
-    } catch (error) {
-      console.error("Error clearing filters from localStorage:", error);
-    }
-  };
-
-  // Clear all filters and localStorage
-  const handleClearAllFilters = () => {
-    // Batch all filter clearing operations
-    React.startTransition(() => {
-      setSelectedState("");
-      setSelectedDistrict("");
-      setSelectedBlock("");
-      setSearch("");
-      setSearchInput("");
-      setSelectedDateFilter("");
-      setDateFrom(undefined);
-      setDateTo(undefined);
-      setPage(1);
-    });
-
-    // Clear localStorage
-    clearAllFiltersFromStorage();
-  };
+  }, [search]);
 
   const getFilters = () => {
     const filters: any = {};
@@ -316,91 +145,6 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
     staleTime: 5000,
   });
 
-  // console.log(data, "data");
-
-  const {
-    data: states,
-    isLoading: statesLoading,
-    refetch: refetchStates,
-  } = useQuery({
-    queryKey: ["states"],
-    queryFn: () => getStates(),
-    enabled: false,
-  });
-  const {
-    data: districts,
-    isLoading: districtsLoading,
-    refetch: refetchDistricts,
-  } = useQuery({
-    queryKey: ["districts"],
-    queryFn: () => getDistricts(),
-    enabled: false,
-  });
-  const {
-    data: blocks,
-    isLoading: blocksLoading,
-    refetch: refetchBlocks,
-  } = useQuery({
-    queryKey: ["blocks"],
-    queryFn: () => getBlocks(),
-    enabled: false,
-  });
-
-  const handleStateChange = (value: string) => {
-    // Use React's automatic batching by wrapping in a function
-    React.startTransition(() => {
-      setSelectedState(value);
-      // Clear dependent filters when state changes
-      setSelectedDistrict("");
-      setSelectedBlock("");
-    });
-  };
-
-  const handleDistrictChange = async (value: string) => {
-    const state = await getStateFromDistrictName(value);
-    //  console.log(state, "state");
-
-    // Batch all state updates together
-    React.startTransition(() => {
-      setSelectedState(state.st_name);
-      setSelectedDistrict(value);
-      // Clear dependent filter when district changes
-      setSelectedBlock("");
-    });
-  };
-
-  const handleBlockChange = async (value: string) => {
-    const stateDistrict = await getStateDistrictFromBlockName(value);
-    //  console.log(stateDistrict, "stateDistrict");
-
-    // Batch all state updates together
-    React.startTransition(() => {
-      setSelectedState(stateDistrict.st_name);
-      setSelectedDistrict(stateDistrict.dt_name);
-      setSelectedBlock(value);
-    });
-  };
-
-  const handleDateFilterChange = (value: string) => {
-    // Batch all date-related state updates
-    React.startTransition(() => {
-      setSelectedDateFilter(value);
-      // Reset date ranges when date filter field changes
-      setDateFrom(undefined);
-      setDateTo(undefined);
-      // Reset to page 1
-      setPage(1);
-    });
-  };
-
-  const handleDateRangeChange = (range: { from?: Date; to?: Date }) => {
-    // Batch date range updates
-    React.startTransition(() => {
-      setDateFrom(range.from);
-      setDateTo(range.to);
-    });
-  };
-
   const getPageNumbers = () => {
     const pages = [];
     const maxPagesToShow = 5;
@@ -429,11 +173,6 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
       }
     }
     return pages;
-  };
-
-  const handlePageClick = (e: React.MouseEvent, pageNum: number | string) => {
-    e.preventDefault();
-    if (typeof pageNum === "number") setPage(pageNum);
   };
 
   useEffect(() => {
@@ -803,32 +542,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
       }  mx-auto transition-all duration-300`}
     >
       <div className="mb-4 w-full flex justify-between">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 border rounded-md w-64 h-8 p-2 bg-[#f4f4f5] dark:bg-[#11181c]">
-            <SearchIcon size={16} />
-            <Input
-              type="search"
-              placeholder="Search for route name"
-              className="border-none ring-none shadow-none focus:border-none focus:ring-none focus-visible:ring-0 focus-visible:ring-offset-0"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-            />
-          </div>
-          {(selectedState ||
-            selectedDistrict ||
-            selectedBlock ||
-            search ||
-            selectedDateFilter) && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleClearAllFilters}
-              className="h-8 text-xs"
-            >
-              Clear Filters
-            </Button>
-          )}
-        </div>
+        <SearchBar />
 
         <div className="flex items-center gap-2 h-8">
           <Button
@@ -844,213 +558,33 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
             <DownloadIcon size={14} />
           </Button>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-[80px]  font-normal text-xs h-8 p-1 bg-[#006fee] text-white rounded-lg border-none hover:bg-[#006fee]/80 hover:text-white "
-              >
-                <Settings2 />
-                <p className="text-xs">View</p>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-[150px]">
-              <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {table
-                .getAllColumns()
-                .filter(
-                  (column) =>
-                    typeof column.accessorFn !== "undefined" &&
-                    column.getCanHide()
-                )
-                .map((column) => {
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
-                      }
-                    >
-                      {column.id}
-                    </DropdownMenuCheckboxItem>
-                  );
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <ToggleColumns table={table} />
 
-          <Popover onOpenChange={(open) => open && refetchStates()}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-[80px] justify-between font-normal text-xs h-8 p-1 bg-[#006fee] text-white rounded-lg border-none hover:bg-[#006fee]/80 hover:text-white"
-              >
-                <span
-                  className="truncate flex-1 text-left"
-                  title={selectedState || "State"}
-                >
-                  {selectedState || "State"}
-                </span>
-                <ChevronDownIcon className="h-3 w-3 flex-shrink-0 ml-1" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[180px] p-0" align="start">
-              <Command>
-                <CommandInput placeholder="Search states..." />
-                <CommandList>
-                  <CommandEmpty>No state found.</CommandEmpty>
-                  {statesLoading ? (
-                    <CommandItem value="Loading...">Loading States</CommandItem>
-                  ) : (
-                    states?.map((state: any, idx: number) => (
-                      <CommandItem
-                        key={idx}
-                        value={state.st_name}
-                        onSelect={() => handleStateChange(state.st_name)}
-                      >
-                        {state.st_name}
-                      </CommandItem>
-                    ))
-                  )}
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-
-          <Popover onOpenChange={(open) => open && refetchDistricts()}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-[80px] justify-between font-normal text-xs h-8 p-1 bg-[#006fee] text-white rounded-lg border-none hover:bg-[#006fee]/80 hover:text-white"
-              >
-                <span
-                  className="truncate flex-1 text-left"
-                  title={selectedDistrict || "District"}
-                >
-                  {selectedDistrict || "District"}
-                </span>
-                <ChevronDownIcon className="h-3 w-3 flex-shrink-0 ml-1" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[180px] p-0" align="start">
-              <Command>
-                <CommandInput placeholder="Search districts..." />
-                <CommandList>
-                  <CommandEmpty>No district found.</CommandEmpty>
-                  {districtsLoading ? (
-                    <CommandItem value="Loading...">
-                      Loading Districts
-                    </CommandItem>
-                  ) : (
-                    districts?.map((district: any, idx: number) => (
-                      <CommandItem
-                        key={idx}
-                        value={district.dt_name}
-                        onSelect={() => handleDistrictChange(district.dt_name)}
-                      >
-                        {district.dt_name}
-                      </CommandItem>
-                    ))
-                  )}
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-
-          <Popover onOpenChange={(open) => open && refetchBlocks()}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-[80px] justify-between font-normal text-xs h-8 p-1 bg-[#006fee] text-white rounded-lg border-none hover:bg-[#006fee]/80 hover:text-white"
-              >
-                <span
-                  className="truncate flex-1 text-left"
-                  title={selectedBlock || "Block"}
-                >
-                  {selectedBlock || "Block"}
-                </span>
-                <ChevronDownIcon className="h-3 w-3 flex-shrink-0 ml-1" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[180px] p-0" align="start">
-              <Command>
-                <CommandInput placeholder="Search blocks..." />
-                <CommandList>
-                  <CommandEmpty>No block found.</CommandEmpty>
-                  {blocksLoading ? (
-                    <CommandItem value="Loading...">Loading Blocks</CommandItem>
-                  ) : (
-                    blocks?.map((block: any, idx: number) => (
-                      <CommandItem
-                        key={idx}
-                        value={block.blk_name}
-                        onSelect={() => handleBlockChange(block.blk_name)}
-                      >
-                        {block.blk_name}
-                      </CommandItem>
-                    ))
-                  )}
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-[80px] justify-between font-normal text-xs h-8 p-1 bg-[#006fee] text-white rounded-lg border-none hover:bg-[#006fee]/80 hover:text-white"
-              >
-                <span
-                  className="truncate flex-1 text-left"
-                  title={selectedDateFilter || "Date Filter"}
-                >
-                  {selectedDateFilter === "Mobile_Video_Capture_Time"
-                    ? "Uploaded On"
-                    : selectedDateFilter === "Created_On"
-                    ? "Created On"
-                    : "Date Filter"}
-                </span>
-                <ChevronDownIcon className="h-3 w-3 flex-shrink-0 ml-1" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[100px] p-0" align="start">
-              <Command>
-                <CommandList>
-                  <CommandItem
-                    value="Mobile_Video_Capture_Time"
-                    onSelect={() =>
-                      handleDateFilterChange("Mobile_Video_Capture_Time")
-                    }
-                  >
-                    Uploaded On
-                  </CommandItem>
-                  <CommandItem
-                    value="Created_On"
-                    onSelect={() => handleDateFilterChange("Created_On")}
-                  >
-                    Created On
-                  </CommandItem>
-                  {/* <CommandItem
-                    value="Verified_On"
-                    onSelect={() => handleDateFilterChange("Verified_On")}
-                  >
-                    Verified On
-                  </CommandItem> */}
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-
-          <DateRangePicker
-            from={dateFrom}
-            to={dateTo}
-            onSelect={handleDateRangeChange}
-            disabled={!selectedDateFilter}
+          <LocationPopover
+            label="State"
+            selected={selectedState}
+            queryKey="states"
+            queryFn={getStates}
+            itemKey="st_name"
           />
+
+          <LocationPopover
+            label="District"
+            selected={selectedDistrict}
+            queryKey="districts"
+            queryFn={getDistricts}
+            itemKey="dt_name"
+          />
+
+          <LocationPopover
+            label="Block"
+            selected={selectedBlock}
+            queryKey="blocks"
+            queryFn={getBlocks}
+            itemKey="blk_name"
+          />
+
+          <DateRangePicker />
         </div>
       </div>
       <DataTable
@@ -1062,58 +596,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
       <p className="text-sm text-gray-500 mt-1 text-center">
         {data && data.length > 0 ? data[0].count : 0} results found
       </p>
-      <div className="flex items-center justify-center py-4 mt-4">
-        <Pagination>
-          <PaginationContent className="gap-1">
-            {/* Previous */}
-            <PaginationItem>
-              <PaginationPrevious
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setPage((prev) => Math.max(prev - 1, 1));
-                }}
-                className="cursor-pointer"
-              />
-            </PaginationItem>
-
-            {/* Page Numbers */}
-            {getPageNumbers().map((num, idx) => (
-              <PaginationItem key={idx}>
-                {num === "..." ? (
-                  <PaginationEllipsis />
-                ) : (
-                  <PaginationLink
-                    href="#"
-                    onClick={(e) => handlePageClick(e, num)}
-                    isActive={num === page}
-                    className={`px-3 py-1.5 text-sm font-medium border-none rounded-full transition-all duration-300
-                ${
-                  num === page
-                    ? "bg-[#006fee] text-white shadow-md scale-105"
-                    : "text-gray-800 hover:bg-gray-100 hover:scale-105"
-                }`}
-                  >
-                    {num}
-                  </PaginationLink>
-                )}
-              </PaginationItem>
-            ))}
-
-            {/* Next */}
-            <PaginationItem>
-              <PaginationNext
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setPage((prev) => Math.min(prev + 1, 10000));
-                }}
-                className="cursor-pointer"
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
+      <TablePagination getPageNumbers={getPageNumbers} />
     </div>
   );
 }

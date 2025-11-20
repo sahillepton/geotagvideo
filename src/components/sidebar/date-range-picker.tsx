@@ -10,40 +10,21 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-
-interface DateRangePickerProps {
-  from?: Date;
-  to?: Date;
-  onSelect?: (range: { from?: Date; to?: Date }) => void;
-  disabled?: boolean;
-}
-
-export function DateRangePicker({
-  from,
-  to,
-  onSelect,
-  disabled,
-}: DateRangePickerProps) {
+import { useDateFrom, useDateTo } from "@/lib/store";
+export function DateRangePicker() {
+  const { dateFrom, setDateFrom } = useDateFrom();
+  const { dateTo, setDateTo } = useDateTo();
   const [fromOpen, setFromOpen] = React.useState(false);
   const [toOpen, setToOpen] = React.useState(false);
-  const [fromDate, setFromDate] = React.useState<Date | undefined>(from);
-  const [toDate, setToDate] = React.useState<Date | undefined>(to);
-
-  React.useEffect(() => {
-    setFromDate(from);
-    setToDate(to);
-  }, [from, to]);
 
   const handleFromDateSelect = (date: Date | undefined) => {
-    setFromDate(date);
+    setDateFrom(date);
     setFromOpen(false);
-    onSelect?.({ from: date, to: toDate });
   };
 
   const handleToDateSelect = (date: Date | undefined) => {
-    setToDate(date);
+    setDateTo(date);
     setToOpen(false);
-    onSelect?.({ from: fromDate, to: date });
   };
 
   return (
@@ -53,20 +34,19 @@ export function DateRangePicker({
           <Button
             variant="outline"
             className="w-24 justify-between font-normal text-xs h-8 bg-[#006fee] text-white rounded-lg border-none hover:bg-[#006fee]/80 hover:text-white "
-            disabled={disabled}
-            title={fromDate ? fromDate.toLocaleDateString() : "From Date"}
+            title={dateFrom ? dateFrom.toLocaleDateString() : "From Date"}
           >
-            {fromDate ? fromDate.toLocaleDateString() : "From Date"}
+            {dateFrom ? dateFrom.toLocaleDateString() : "From Date"}
             <ChevronDownIcon className="h-3 w-3" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto overflow-hidden p-0" align="start">
           <Calendar
             mode="single"
-            selected={fromDate}
+            selected={dateFrom}
             captionLayout="dropdown"
             onSelect={handleFromDateSelect}
-            disabled={(date) => (toDate ? date > toDate : false)}
+            disabled={(date) => (dateTo ? date > dateTo : false)}
           />
         </PopoverContent>
       </Popover>
@@ -76,20 +56,19 @@ export function DateRangePicker({
           <Button
             variant="outline"
             className="w-24 justify-between font-normal text-xs h-8 bg-[#006fee] text-white rounded-lg border-none hover:bg-[#006fee]/80 hover:text-white"
-            disabled={disabled}
-            title={toDate ? toDate.toLocaleDateString() : "To Date"}
+            title={dateTo ? dateTo.toLocaleDateString() : "To Date"}
           >
-            {toDate ? toDate.toLocaleDateString() : "To Date"}
+            {dateTo ? dateTo.toLocaleDateString() : "To Date"}
             <ChevronDownIcon className="h-3 w-3" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto overflow-hidden p-0" align="start">
           <Calendar
             mode="single"
-            selected={toDate}
+            selected={dateTo}
             captionLayout="dropdown"
             onSelect={handleToDateSelect}
-            disabled={(date) => (fromDate ? date < fromDate : false)}
+            disabled={(date) => (dateFrom ? date < dateFrom : false)}
           />
         </PopoverContent>
       </Popover>

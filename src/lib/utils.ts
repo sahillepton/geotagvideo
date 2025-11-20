@@ -8,10 +8,6 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/* -------------------------------------------------------------------------- */
-/*                               GEOJSON HELPERS                               */
-/* -------------------------------------------------------------------------- */
-
 interface TrackPoint {
   Latitude: number;
   Longitude: number;
@@ -32,8 +28,6 @@ const convertToGeoJSON = (points: TrackPoint[]) => ({
     },
   ],
 });
-
-/* ----------------------------- KML CONVERSION ------------------------------ */
 
 function geojsonToKml(geojson: any) {
   const kmlHeader = `<?xml version="1.0" encoding="UTF-8"?>
@@ -61,7 +55,6 @@ function geojsonToKml(geojson: any) {
     }
   };
 
-  // GeoJSON may contain single Feature or FeatureCollection
   const features = (geojson.features || [geojson])
     .map((f: any) => {
       const name = f.properties?.name ?? "Track";
@@ -76,8 +69,6 @@ function geojsonToKml(geojson: any) {
 
   return `${kmlHeader}${features}${kmlFooter}`;
 }
-
-/* ----------------------------- FILE DOWNLOADS ------------------------------ */
 
 const downloadBlob = (blob: Blob, filename: string) => {
   console.log(blob, "blob");
@@ -94,15 +85,11 @@ const downloadBlob = (blob: Blob, filename: string) => {
   a.remove();
 };
 
-/* ------------------------------ DOWNLOAD CSV ------------------------------- */
-
 const downloadCSV = (points: TrackPoint[], name: string) => {
   const csv = Papa.unparse(points);
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   downloadBlob(blob, `${name}.csv`);
 };
-
-/* ------------------------------ DOWNLOAD KML ------------------------------- */
 
 const downloadKML = (kml: string, name: string) => {
   const blob = new Blob([kml], {
@@ -110,8 +97,6 @@ const downloadKML = (kml: string, name: string) => {
   });
   downloadBlob(blob, `${name}.kml`);
 };
-
-/* ------------------------------ PUBLIC EXPORT ------------------------------ */
 
 export const handleDownloadGeoJSON = async (gpsTrackId: string) => {
   try {
@@ -131,7 +116,6 @@ export const handleDownloadGeoJSON = async (gpsTrackId: string) => {
     const geoJSON = convertToGeoJSON(points);
     const kml = geojsonToKml(geoJSON);
 
-    // CSV download uses original points array (not GeoJSON)
     downloadCSV(points, data.name);
     downloadKML(kml, data.name);
 
@@ -140,10 +124,6 @@ export const handleDownloadGeoJSON = async (gpsTrackId: string) => {
     console.error("Error downloading GPS data:", err);
   }
 };
-
-/* -------------------------------------------------------------------------- */
-/*                               VIDEO DOWNLOAD                                */
-/* -------------------------------------------------------------------------- */
 
 export const handleDownloadVideo = async (surveyId: string) => {
   try {
@@ -163,7 +143,6 @@ export const handleDownloadVideo = async (surveyId: string) => {
       return;
     }
 
-    // Ensure file has .mp4 extension (optional)
     const fileName = data.name?.endsWith(".mp4")
       ? data.name
       : `${data.name}.mp4`;
@@ -171,7 +150,7 @@ export const handleDownloadVideo = async (surveyId: string) => {
     const a = document.createElement("a");
     a.href = data.url;
     a.download = fileName;
-    a.target = "_blank"; // Helps some browsers force download
+    a.target = "_blank";
     document.body.appendChild(a);
     a.click();
     a.remove();
