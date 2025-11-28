@@ -125,7 +125,7 @@ const VideoPage = async ({
             </Link>
           </Button>
         </div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-balance text-[#262626] dark:text-white">
+        <h1 className="text-2xl font-extrabold tracking-tight text-balance text-[#5587dc]">
           {videoData.name}
         </h1>
       </div>

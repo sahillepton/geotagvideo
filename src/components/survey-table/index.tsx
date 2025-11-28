@@ -253,22 +253,28 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
               {row.original.routeName}
             </Button>
           </HoverCardTrigger>
-          <HoverCardContent className="w-80">
-            <div className="flex gap-4 items-center">
-              <div className="bg-black text-white rounded-full p-2 w-10 h-10 flex items-center justify-center">
+          <HoverCardContent className="w-80 max-w-[calc(100vw-2rem)]">
+            <div className="flex gap-4 items-start">
+              <div className="bg-black text-white rounded-full p-2 w-10 h-10 flex items-center justify-center flex-shrink-0">
                 <RouteIcon size={20} />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1 min-w-0 flex-1">
                 <Link
                   href={`/video/${row.original.surveyId}`}
-                  className="text-sm font-semibold hover:underline"
+                  className="text-sm font-semibold hover:underline break-words line-clamp-2"
                 >
                   {row.original.routeName}
                 </Link>
-                <div className="flex gap-2">
-                  <Badge variant={"secondary"}>{row.original.state}</Badge>
-                  <Badge variant={"secondary"}>{row.original.district}</Badge>
-                  <Badge variant={"secondary"}>{row.original.block}</Badge>
+                <div className="flex gap-2 flex-wrap">
+                  <Badge variant={"secondary"} className="truncate max-w-full">
+                    {row.original.state}
+                  </Badge>
+                  <Badge variant={"secondary"} className="truncate max-w-full">
+                    {row.original.district}
+                  </Badge>
+                  <Badge variant={"secondary"} className="truncate max-w-full">
+                    {row.original.block}
+                  </Badge>
                 </div>
                 <div className="text-muted-foreground text-xs">
                   {moment(row.original.mobileVideoCaptureTime).format(
@@ -546,20 +552,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
         <SearchBar />
 
         <div className="flex items-center gap-2 h-8">
-          {/* <Button
-            variant="outline"
-            size="sm"
-            className="h-8 text-xs"
-            onClick={async () => {
-              for (const survey of data) {
-                await handleDownloadGeoJSON(survey.gpsTrackId);
-              }
-            }}
-          >
-            <DownloadIcon size={14} />
-          </Button> */}
-
-          <DownloadDialog />
+          <DownloadDialog currentUser={currentUser} />
 
           <ToggleColumns table={table} />
 
