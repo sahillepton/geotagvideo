@@ -57,6 +57,7 @@ import {
   useSelectedDistrict,
   useSelectedState,
 } from "@/lib/store";
+import DownloadDialog from "./download-dialog";
 
 const avatarColors = [
   { bg: "bg-green-200", text: "text-green-800" },
@@ -545,7 +546,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
         <SearchBar />
 
         <div className="flex items-center gap-2 h-8">
-          <Button
+          {/* <Button
             variant="outline"
             size="sm"
             className="h-8 text-xs"
@@ -556,7 +557,9 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
             }}
           >
             <DownloadIcon size={14} />
-          </Button>
+          </Button> */}
+
+          <DownloadDialog />
 
           <ToggleColumns table={table} />
 

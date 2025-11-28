@@ -2,6 +2,8 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { supabase } from "./supabase";
 import Papa from "papaparse";
+import FFmpeg from "@ffmpeg/ffmpeg";
+import { fetchFile } from "@ffmpeg/util";
 
 // Tailwind class merge
 export function cn(...inputs: ClassValue[]) {
@@ -98,6 +100,44 @@ const downloadKML = (kml: string, name: string) => {
   downloadBlob(blob, `${name}.kml`);
 };
 
+// Helper functions to generate file data without downloading
+export const generateCSVData = (points: TrackPoint[]): string => {
+  return Papa.unparse(points);
+};
+
+export const generateKMLData = (points: TrackPoint[]): string => {
+  const geoJSON = convertToGeoJSON(points);
+  return geojsonToKml(geoJSON);
+};
+
+export const generateTrackFiles = async (gpsTrackId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from("gps_tracks")
+      .select("location_data, name")
+      .eq("id", gpsTrackId)
+      .single();
+
+    if (error) {
+      console.error("Error fetching GPS track:", error);
+      return null;
+    }
+
+    const points: TrackPoint[] = data.location_data;
+    const csv = generateCSVData(points);
+    const kml = generateKMLData(points);
+
+    return {
+      name: data.name,
+      csv,
+      kml,
+    };
+  } catch (err) {
+    console.error("Error generating track files:", err);
+    return null;
+  }
+};
+
 export const handleDownloadGeoJSON = async (gpsTrackId: string) => {
   try {
     const { data, error } = await supabase
@@ -129,7 +169,7 @@ export const handleDownloadVideo = async (surveyId: string) => {
   try {
     const { data, error } = await supabase
       .from("videos")
-      .select("url, name")
+      .select("url, name, mux_playback_id")
       .eq("survey_id", surveyId)
       .single();
 
@@ -158,3 +198,67 @@ export const handleDownloadVideo = async (surveyId: string) => {
     console.error("Error downloading video:", err);
   }
 };
+
+async function downloadM3U8AsMP4(m3u8Url: string, filename: string) {
+  try {
+    // Fetch M3U8 playlist
+    const response = await fetch(m3u8Url);
+    const m3u8Content = await response.text();
+
+    // Parse segment URLs
+    const lines = m3u8Content.split("\n").filter((line) => line.trim());
+    const segments = [];
+
+    for (const line of lines) {
+      if (line && !line.startsWith("#")) {
+        let segmentUrl = line.trim();
+        if (!segmentUrl.startsWith("http")) {
+          const base = m3u8Url.substring(0, m3u8Url.lastIndexOf("/") + 1);
+          segmentUrl = base + segmentUrl;
+        }
+        segments.push(segmentUrl);
+      }
+    }
+
+    console.log(`Found ${segments.length} segments`);
+
+    // Download all segments
+    const downloadedSegments = [];
+    for (let i = 0; i < segments.length; i++) {
+      console.log(`Downloading segment ${i + 1}/${segments.length}`);
+      const res = await fetch(segments[i]);
+      const arrayBuffer = await res.arrayBuffer();
+      downloadedSegments.push(arrayBuffer);
+    }
+
+    // Merge segments
+    const totalLength = downloadedSegments.reduce(
+      (sum, seg) => sum + seg.byteLength,
+      0
+    );
+    const merged = new Uint8Array(totalLength);
+    let offset = 0;
+
+    for (const segment of downloadedSegments) {
+      merged.set(new Uint8Array(segment), offset);
+      offset += segment.byteLength;
+    }
+
+    // Create and download blob
+    const blob = new Blob([merged], { type: "video/mp4" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    console.log("Download complete!");
+    return true;
+  } catch (error) {
+    console.error("Download failed:", error);
+    return false;
+  }
+}
