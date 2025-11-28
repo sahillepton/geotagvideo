@@ -159,7 +159,13 @@ const RowAction = ({
             </div>
             <DialogFooter>
               <Button variant="outline">Cancel</Button>
-              <Button onClick={() => editRouteName()}>
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  editRouteName();
+                }}
+              >
                 {isEditing ? <Loader2 size={16} /> : "Update Route Name"}
               </Button>
             </DialogFooter>

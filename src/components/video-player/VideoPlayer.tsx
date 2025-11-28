@@ -22,6 +22,7 @@ import { ProgressBar } from "./ProgressBar";
 import MetadataPopover from "./metadata-popover";
 import { MetadataColumn } from "./metadata-column";
 import Image from "next/image";
+import { RotationTracker } from "./RotationTracker";
 
 const store = createXRStore();
 
@@ -32,6 +33,7 @@ export const VideoPlayer = ({
   initialTimestamp = 1,
   locationData = [],
   createdAt,
+  onRotationChange,
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -488,6 +490,9 @@ export const VideoPlayer = ({
         >
           <XR store={store}>
             <OrbitControls enableZoom={false} enablePan={false} />
+            {onRotationChange && (
+              <RotationTracker onRotationChange={onRotationChange} />
+            )}
             <Suspense fallback={null}>
               {video && <VideoSphere video={video} />}
             </Suspense>
