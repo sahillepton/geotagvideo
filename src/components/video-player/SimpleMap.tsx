@@ -1,6 +1,6 @@
 // @ts-nocheck
 "use client";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { MapPin, Clock, Ruler, Crosshair } from "lucide-react";
 import MetadataPopover from "./metadata-popover";
@@ -18,11 +18,13 @@ export const SimpleMap = ({
   video,
   createdAt,
   state,
+  rotationAngle = 0,
 }: {
   data: any[];
   video: HTMLVideoElement | null;
   createdAt: string;
   state: string;
+  rotationAngle?: number;
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const movingMarkerRef = useRef<any>(null);
@@ -38,6 +40,21 @@ export const SimpleMap = ({
   const [timestamp, setTimestamp] = useState(0);
   const [hoverInfo, setHoverInfo] = useState(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+  // Function to create rotated icon
+  const createRotatedIcon = useCallback((angle: number) => {
+    return {
+      url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24">
+          <g transform="rotate(${angle} 12 12)">
+            <path d="M4.037 4.688a.495.495 0 0 1 .651-.651l16 6.5a.5.5 0 0 1-.063.947l-6.124 1.58a2 2 0 0 0-1.438 1.435l-1.579 6.126a.5.5 0 0 1-.947.063z" fill="black" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </g>
+        </svg>
+      `)}`,
+      scaledSize: new window.google.maps.Size(26, 26),
+      anchor: new window.google.maps.Point(13, 13),
+    };
+  }, []);
 
   const calcDistance = (
     lat1: number,
@@ -217,22 +234,14 @@ export const SimpleMap = ({
       });
       endInfoWindow.open(googleMap, endMarker);
 
-      // Create moving marker as a blue circle
+      // Create moving marker
       const movingMarker = new window.google.maps.Marker({
         position: {
           lat: parseFloat(firstPoint.Latitude),
           lng: parseFloat(firstPoint.Longitude),
         },
         map: googleMap,
-        icon: {
-          url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-            <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="8" cy="8" r="6" fill="#3B82F6" stroke="#3B82F6" stroke-width="2" fill-opacity="0.9"/>
-            </svg>
-          `)}`,
-          scaledSize: new window.google.maps.Size(16, 16),
-          anchor: new window.google.maps.Point(8, 8),
-        },
+        icon: createRotatedIcon(rotationAngle),
       });
 
       movingMarkerRef.current = movingMarker;
@@ -417,7 +426,7 @@ export const SimpleMap = ({
       clearTimeout(timer);
       // Google Maps cleanup is handled automatically
     };
-  }, [mapRef, map, data]);
+  }, [mapRef, map, data, rotationAngle]);
 
   // Smooth marker movement with requestAnimationFrame
   useEffect(() => {
@@ -536,6 +545,12 @@ export const SimpleMap = ({
       video.removeEventListener("loadedmetadata", updateMarker);
     };
   }, [video, map, data]);
+
+  // Update marker icon rotation when rotationAngle changes
+  useEffect(() => {
+    if (!movingMarkerRef.current || !map) return;
+    movingMarkerRef.current.setIcon(createRotatedIcon(rotationAngle));
+  }, [rotationAngle, map, createRotatedIcon]);
 
   const formatTime = (t: number) => {
     if (!t) return "0:00";

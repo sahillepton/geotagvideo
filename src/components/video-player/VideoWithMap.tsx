@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { PanelGroup, Panel, PanelResizeHandle } from "react-resizable-panels";
 import { VideoPlayer } from "./VideoPlayer";
 import { SimpleMap } from "./SimpleMap";
+import { useThree } from "@react-three/fiber";
 
 declare global {
   interface Window {
@@ -20,8 +21,8 @@ export function VideoWithMap({
   state,
 }) {
   const [video, setVideo] = useState(null);
+  const [rotationAngle, setRotationAngle] = useState(0);
 
-  // Location data is already parsed on the server-side
   const sortedData = useMemo(() => {
     if (!locationData || !Array.isArray(locationData)) return [];
 
@@ -32,7 +33,6 @@ export function VideoWithMap({
     return sorted;
   }, [locationData]);
 
-  // Find the closest GPS point to initial coordinates if provided
   let initialTimestamp = 0;
   if (
     initialX !== undefined &&
@@ -91,6 +91,7 @@ export function VideoWithMap({
             initialTimestamp={initialTimestamp}
             locationData={sortedData}
             createdAt={createdAt}
+            onRotationChange={setRotationAngle}
           />
         </div>
       </Panel>
@@ -103,6 +104,7 @@ export function VideoWithMap({
               video={video}
               createdAt={createdAt}
               state={state}
+              rotationAngle={rotationAngle}
             />
           )}
         </div>
