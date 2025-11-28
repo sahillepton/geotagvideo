@@ -31,7 +31,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { handleDownloadGeoJSON, handleDownloadVideo } from "@/lib/utils";
 
-const RowAction = ({
+const ColumnRowAction = ({
   gpsTrackId,
   surveyId,
   routeName,
@@ -192,4 +192,4 @@ const RowAction = ({
   );
 };
 
-export default RowAction;
+export default ColumnRowAction;

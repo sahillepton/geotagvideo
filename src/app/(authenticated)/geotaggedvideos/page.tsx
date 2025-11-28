@@ -1,6 +1,5 @@
 import { getVideoList } from "@/components/sidebar/action";
 import SurveyTable from "@/components/survey-table";
-import { Badge } from "@/components/ui/badge";
 import {
   dehydrate,
   HydrationBoundary,
@@ -8,9 +7,6 @@ import {
 } from "@tanstack/react-query";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { Suspense } from "react";
-
-export const experimental_ppr = true;
 
 const Page = async () => {
   const user = (await cookies()).get("user");

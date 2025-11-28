@@ -49,18 +49,15 @@ const VideoPage = async ({
   const { data: videoData, error: videoError } = videoResult;
   const { data: surveyData, error: surveyError } = surveyResult;
 
-  // Parse location data if it's a JSON string
   const parsedLocationData = (() => {
     if (!surveyData?.gps_tracks?.location_data) return [];
 
     try {
-      // If locationData is a string, parse it
       if (typeof surveyData.gps_tracks.location_data === "string") {
         const parsed = JSON.parse(surveyData.gps_tracks.location_data);
         return Array.isArray(parsed) ? parsed : [];
       }
 
-      // If it's already an array, return it
       if (Array.isArray(surveyData.gps_tracks.location_data)) {
         return surveyData.gps_tracks.location_data;
       }
@@ -72,12 +69,7 @@ const VideoPage = async ({
     }
   })();
 
-  // console.log(videoData);
-  //console.log(surveyData);
-  // console.log(videoError);
-  //console.log(surveyError);
   if (!videoData?.url) {
-    // console.log("no video found for this survey");
     return (
       <div className="flex flex-col justify-center items-center h-screen gap-4">
         <Badge
@@ -97,7 +89,6 @@ const VideoPage = async ({
   }
 
   if (!videoData.mux_playback_id) {
-    //  console.log("video is still processing");
     return (
       <div className="flex flex-col justify-center items-center h-screen">
         <h1 className="text-2xl font-bold">Video is still processing</h1>

@@ -1,20 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  BookOpen,
-  Bot,
-  Command,
-  Frame,
-  LifeBuoy,
-  Map,
-  PieChart,
-  Send,
-  Settings2,
-  SquareTerminal,
-  UserIcon,
-  VideoIcon,
-} from "lucide-react";
+import { Command, UserIcon, VideoIcon } from "lucide-react";
 
 import {
   Sidebar,
@@ -26,19 +13,11 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { NavUser } from "./nav-user";
 import { User } from "@/lib/types";
 import { usePathname } from "next/navigation";
-import { useSurveyStore } from "@/lib/store";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "../ui/collapsible";
+import { Collapsible, CollapsibleTrigger } from "../ui/collapsible";
 import Link from "next/link";
 
 export function AppSidebar({
@@ -89,22 +68,6 @@ export function AppSidebar({
                     </a>
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
-                {/* <CollapsibleContent>
-                  <SidebarMenuSub>
-                    {surveys.map((survey) => (
-                      <SidebarMenuSubItem key={survey.id}>
-                        <SidebarMenuSubButton
-                          asChild
-                          isActive={surveyId === survey.id}
-                        >
-                          <Link href={`/video/${survey.id}`}>
-                            <span>{survey.name}</span>
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    ))}
-                  </SidebarMenuSub>
-                </CollapsibleContent> */}
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroup>

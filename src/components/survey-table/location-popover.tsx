@@ -42,9 +42,9 @@ export default function LocationPopover({
     enabled: enabled ?? false,
   });
 
-  const { selectedState, setSelectedState } = useSelectedState();
-  const { selectedDistrict, setSelectedDistrict } = useSelectedDistrict();
-  const { selectedBlock, setSelectedBlock } = useSelectedBlock();
+  const { setSelectedState } = useSelectedState();
+  const { setSelectedDistrict } = useSelectedDistrict();
+  const { setSelectedBlock } = useSelectedBlock();
 
   return (
     <Popover onOpenChange={(open) => open && refetch()}>

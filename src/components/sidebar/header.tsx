@@ -1,4 +1,3 @@
-//@ts-nocheck
 "use client";
 import { usePathname } from "next/navigation";
 import { Breadcrumb, BreadcrumbList } from "../ui/breadcrumb";
@@ -30,7 +29,6 @@ import { toast } from "sonner";
 const Header = ({ user }: { user: User }) => {
   const pathname = usePathname();
   const breadcrumbItems = pathname.split("/").filter((item) => item !== "");
-  //console.log(breadcrumbItems);
   const surveyId = breadcrumbItems.length > 1 ? breadcrumbItems[1] : null;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -46,8 +44,6 @@ const Header = ({ user }: { user: User }) => {
     },
     enabled: !!surveyId,
   });
-
-  //console.log(surveyData, "survey data in header ");
 
   const isVideoVerified = surveyData?.videos[0]?.verified_by;
 

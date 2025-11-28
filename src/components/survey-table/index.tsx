@@ -1,12 +1,11 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo } from "react";
 import { DataTable } from "./data-table";
 import {
   getBlocks,
   getDistricts,
   getStates,
   getVideoList,
-  getVideoList2,
 } from "../sidebar/action";
 
 import {
@@ -19,30 +18,15 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import {
-  BadgeCheckIcon,
-  CalendarIcon,
-  ClockIcon,
-  DownloadIcon,
-  RouteIcon,
-  XIcon,
-} from "lucide-react";
+import { BadgeCheckIcon, CalendarIcon, ClockIcon, XIcon } from "lucide-react";
 import moment from "moment";
 import { Avatar, AvatarFallback } from "../ui/avatar";
-import { Button } from "../ui/button";
 
 import { DateRangePicker } from "../sidebar/date-range-picker";
 import { User } from "@/lib/types";
-import RowAction from "./row-action";
+import ColumnRowAction from "../columns/column-row-action";
 import { Badge } from "../ui/badge";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "../ui/hover-card";
-import Link from "next/link";
 import { useSidebar } from "../ui/sidebar";
-import { handleDownloadGeoJSON } from "@/lib/utils";
 import TablePagination from "./pagination";
 import ToggleColumns from "./toggle-columns";
 import LocationPopover from "./location-popover";
@@ -58,21 +42,12 @@ import {
   useSelectedState,
 } from "@/lib/store";
 import DownloadDialog from "./download-dialog";
-
-const avatarColors = [
-  { bg: "bg-green-200", text: "text-green-800" },
-  { bg: "bg-blue-200", text: "text-blue-800" },
-  { bg: "bg-red-200", text: "text-red-800" },
-  { bg: "bg-yellow-200", text: "text-yellow-800" },
-  { bg: "bg-purple-200", text: "text-purple-800" },
-  { bg: "bg-pink-200", text: "text-pink-800" },
-  { bg: "bg-indigo-200", text: "text-indigo-800" },
-];
-
-const getRandomAvatarColor = () => {
-  const randomIndex = Math.floor(Math.random() * avatarColors.length);
-  return avatarColors[randomIndex];
-};
+import { getRandomAvatarColor, sumTimestamps } from "@/lib/utils";
+import ColumnHoverCard from "../columns/column-hover-card";
+import TextTruncate from "../columns/text-truncate";
+import ColumnHeader from "../columns/column-header";
+import ColumnBadge from "../columns/column-badge";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export default function SurveyTable({ currentUser }: { currentUser: User }) {
   const queryClient = useQueryClient();
@@ -86,54 +61,34 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
   const { dateTo } = useDateTo();
   const { open } = useSidebar();
 
-  useEffect(() => {
-    const timer = setTimeout(() => {}, 500); // 500ms debounce delay
+  useDebounce(search, 500);
 
-    return () => {
-      clearTimeout(timer);
+  const filters = useMemo(() => {
+    const f: any = {
+      userRole: currentUser.role,
+      userId: currentUser.user_id,
     };
-  }, [search]);
 
-  const getFilters = () => {
-    const filters: any = {};
-    filters.userRole = currentUser.role;
-    filters.userId = currentUser.user_id;
-    if (selectedDistrict) {
-      filters.district = selectedDistrict;
-    }
-    if (selectedBlock) {
-      filters.block = selectedBlock;
-    }
-    if (selectedState) {
-      filters.state = selectedState;
-    }
-    if (search) {
-      filters.routeName = search;
-    }
-    if (selectedDateFilter) {
-      filters.dateKey = selectedDateFilter;
-    }
-    if (dateFrom) {
-      filters.dateFrom = dateFrom.toISOString().split("T")[0];
-    }
-    if (dateTo) {
-      filters.dateTo = dateTo.toISOString().split("T")[0];
-    }
-    return filters;
-  };
+    if (selectedDistrict) f.district = selectedDistrict;
+    if (selectedBlock) f.block = selectedBlock;
+    if (selectedState) f.state = selectedState;
+    if (search) f.routeName = search;
+    if (selectedDateFilter) f.dateKey = selectedDateFilter;
+    if (dateFrom) f.dateFrom = dateFrom.toISOString().split("T")[0];
+    if (dateTo) f.dateTo = dateTo.toISOString().split("T")[0];
 
-  const filters = useMemo(
-    () => getFilters(),
-    [
-      selectedState,
-      selectedDistrict,
-      selectedBlock,
-      search,
-      selectedDateFilter,
-      dateFrom,
-      dateTo,
-    ]
-  );
+    return f;
+  }, [
+    currentUser.role,
+    currentUser.user_id,
+    selectedState,
+    selectedDistrict,
+    selectedBlock,
+    search,
+    selectedDateFilter,
+    dateFrom,
+    dateTo,
+  ]);
 
   const { status, data, error, isFetching, isPlaceholderData } = useQuery({
     queryKey: ["videos", page, filters],
@@ -151,8 +106,6 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
     const maxPagesToShow = 5;
     const pageSize = 10;
     if (!data || !data[0]) return [];
-
-    // Calculate total pages based on count and page size
     const totalPages = Math.ceil(data[0].count / pageSize);
 
     if (totalPages <= maxPagesToShow) {
@@ -211,26 +164,13 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
     search,
   ]);
 
-  function sumTimestamps(totalSeconds: number) {
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-
-    // console.log(minutes, "minutes");
-    //console.log(seconds, "seconds");
-
-    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
-      2,
-      "0"
-    )}`;
-  }
-
   const columns: ColumnDef<any>[] = [
     {
       accessorKey: "action",
       header: "",
       cell: ({ row }) => {
         return (
-          <RowAction
+          <ColumnRowAction
             gpsTrackId={row.original.gpsTrackId}
             surveyId={row.original.surveyId}
             routeName={row.original.routeName}
@@ -242,194 +182,82 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
     {
       accessorKey: "route_name",
       header: () => (
-        <span className="!text-left" style={{ textAlign: "left" }}>
-          Route Name
-        </span>
+        <ColumnHeader header="Route Name" style={{ textAlign: "left" }} />
       ),
-      cell: ({ row }) => (
-        <HoverCard>
-          <HoverCardTrigger asChild>
-            <Button variant="link" className="text-left">
-              {row.original.routeName}
-            </Button>
-          </HoverCardTrigger>
-          <HoverCardContent className="w-80 max-w-[calc(100vw-2rem)]">
-            <div className="flex gap-4 items-start">
-              <div className="bg-black text-white rounded-full p-2 w-10 h-10 flex items-center justify-center flex-shrink-0">
-                <RouteIcon size={20} />
-              </div>
-              <div className="space-y-1 min-w-0 flex-1">
-                <Link
-                  href={`/video/${row.original.surveyId}`}
-                  className="text-sm font-semibold hover:underline break-words line-clamp-2"
-                >
-                  {row.original.routeName}
-                </Link>
-                <div className="flex gap-2 flex-wrap">
-                  <Badge variant={"secondary"} className="truncate max-w-full">
-                    {row.original.state}
-                  </Badge>
-                  <Badge variant={"secondary"} className="truncate max-w-full">
-                    {row.original.district}
-                  </Badge>
-                  <Badge variant={"secondary"} className="truncate max-w-full">
-                    {row.original.block}
-                  </Badge>
-                </div>
-                <div className="text-muted-foreground text-xs">
-                  {moment(row.original.mobileVideoCaptureTime).format(
-                    "DD MMM YYYY"
-                  )}
-                </div>
-              </div>
-            </div>
-          </HoverCardContent>
-        </HoverCard>
-      ),
+      cell: ({ row }) => <ColumnHoverCard row={row} />,
     },
     {
       accessorKey: "entity_name",
       header: "Entity Name",
-      cell: ({ row }) => (
-        <div className="flex items-center justify-center">
-          <span
-            title={row.original.entityName}
-            className="w-20 text-center text-xs font-semibold  truncate rounded pl-1 pr-1 text-[#11181c] dark:text-white"
-          >
-            {row.original.entityName.length > 20
-              ? row.original.entityName.slice(0, 20) + "..."
-              : row.original.entityName}
-          </span>
-        </div>
-      ),
+      cell: ({ row }) => <TextTruncate text={row.original.entityName} />,
     },
     {
       accessorKey: "state",
       header: "State",
-      cell: ({ row }) => (
-        <div className="flex items-center justify-center">
-          <span
-            title={row.original.state}
-            className="w-20 text-center text-xs font-semibold truncate rounded px-1 py-0.5 text-[#11181c] dark:text-white"
-          >
-            {row.original.state.length > 20
-              ? row.original.state.slice(0, 20) + "..."
-              : row.original.state}
-          </span>
-        </div>
-      ),
+      cell: ({ row }) => <TextTruncate text={row.original.state} />,
     },
     {
       accessorKey: "district",
       header: "District",
-      cell: ({ row }) => (
-        <div className="flex items-center justify-center">
-          <span
-            title={row.original.district}
-            className="w-20 text-center text-xs font-semibold  truncate  rounded px-1 py-0.5 text-[#11181c] dark:text-white"
-          >
-            {row.original.district.length > 20
-              ? row.original.district.slice(0, 20) + "..."
-              : row.original.district}
-          </span>
-        </div>
-      ),
+      cell: ({ row }) => <TextTruncate text={row.original.district} />,
     },
     {
       accessorKey: "block",
       header: "Block",
-      cell: ({ row }) => (
-        <div className="flex items-center justify-center">
-          <span
-            title={row.original.block}
-            className="w-20 text-center text-xs font-semibold  truncate  rounded px-1 py-0.5 text-[#11181c] dark:text-white"
-          >
-            {row.original.block.length > 20
-              ? row.original.block.slice(0, 20) + "..."
-              : row.original.block}
-          </span>
-        </div>
-      ),
+      cell: ({ row }) => <TextTruncate text={row.original.block} />,
     },
     {
       accessorKey: "ring",
       header: "Ring",
-      cell: ({ row }) => (
-        <div className="flex items-center justify-center">
-          <span className="w-20 text-center text-xs font-semibold  truncate  rounded px-1 py-0.5 text-[#11181c] dark:text-white">
-            {row.original.ring.length > 20
-              ? row.original.ring.slice(0, 20) + "..."
-              : row.original.ring}
-          </span>
-        </div>
-      ),
+      cell: ({ row }) => <TextTruncate text={row.original.ring} />,
     },
     {
       accessorKey: "child_ring",
       header: "Child Ring",
-      cell: ({ row }) => (
-        <div className="flex items-center justify-center">
-          <span className="w-20 text-center text-xs font-semibold  truncate  rounded px-1 py-0.5 text-[#11181c] dark:text-white">
-            {row.original.childRing.length > 20
-              ? row.original.childRing.slice(0, 20) + "..."
-              : row.original.childRing}
-          </span>
-        </div>
-      ),
+      cell: ({ row }) => <TextTruncate text={row.original.childRing} />,
     },
     {
       accessorKey: "video_name",
       header: "Video Name",
       cell: ({ row }) => (
-        <Badge
-          className={`text-xs flex items-center ${
+        <ColumnBadge
+          color={row.original.videoName === "-" ? "error" : "success"}
+          icon={row.original.videoName === "-" ? <XIcon size={14} /> : null}
+          text={
             row.original.videoName === "-"
-              ? "bg-[#fdd0df] text-[#c20e4d]"
-              : "bg-[#d1f4e0] text-[#419967]"
-          }`}
-        >
-          {row.original.videoName === "-" ? (
-            <span className="flex items-center gap-1">
-              {" "}
-              <XIcon size={14} /> Not Uploaded
-            </span>
-          ) : (
-            row.original.videoName
-          )}
-        </Badge>
+              ? "Not Uploaded"
+              : row.original.videoName
+          }
+        />
       ),
     },
     {
       accessorKey: "duration",
       header: "Duration",
       cell: ({ row }) => (
-        <Badge variant={"secondary"}>
-          {row.original.duration > 0 ? (
-            <>
-              <ClockIcon size={14} className="ml-1" />
-              {sumTimestamps(row.original.duration)}
-            </>
-          ) : (
-            "00:00"
-          )}
-        </Badge>
+        <ColumnBadge
+          text={
+            row.original.duration > 0
+              ? sumTimestamps(row.original.duration)
+              : "00:00"
+          }
+          color="info"
+          icon={<ClockIcon size={14} />}
+        />
       ),
     },
     {
       accessorKey: "uploaded_on",
       header: "Uploaded On",
       cell: ({ row }) => {
-        const date = moment(row.original.mobileVideoCaptureTime).format(
-          "DD MMM YYYY"
-        );
-        const time = moment(row.original.mobileVideoCaptureTime).format(
-          "hh:mm:ss A"
-        );
         return (
-          <Badge variant={"secondary"}>
-            <CalendarIcon size={14} />
-            <span>{date}</span>
-          </Badge>
+          <ColumnBadge
+            text={moment(row.original.mobileVideoCaptureTime).format(
+              "DD MMM YYYY"
+            )}
+            color="info"
+            icon={<CalendarIcon size={14} />}
+          />
         );
       },
     },
@@ -437,12 +265,12 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
       accessorKey: "created_on",
       header: "Created On",
       cell: ({ row }) => {
-        const date = moment(row.original.createdOn).format("DD MMM YYYY");
         return (
-          <Badge variant={"secondary"}>
-            <CalendarIcon size={14} />
-            <span>{date}</span>
-          </Badge>
+          <ColumnBadge
+            text={moment(row.original.createdOn).format("DD MMM YYYY")}
+            color="info"
+            icon={<CalendarIcon size={14} />}
+          />
         );
       },
     },
@@ -475,19 +303,13 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
       header: "Status",
       cell: ({ row }) => {
         return (
-          <Badge
-            variant="secondary"
-            className={`${
-              row.original.verifiedStates === "APPROVED"
-                ? "bg-blue-500 dark:bg-blue-600"
-                : "bg-orange-500 dark:bg-orange-600"
-            }  text-xs text-white`}
-          >
-            <BadgeCheckIcon size={14} />
-            {row.original.verifiedStatus === "APPROVED"
-              ? "APPROVED"
-              : "PENDING"}
-          </Badge>
+          <ColumnBadge
+            color={
+              row.original.verifiedStatus === "APPROVED" ? "info" : "warning"
+            }
+            icon={<BadgeCheckIcon size={14} />}
+            text={row.original.verifiedStatus}
+          />
         );
       },
     },
@@ -496,14 +318,15 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
       header: "Verified On",
       cell: ({ row }) => {
         return (
-          <Badge className="bg-[#fdd0df] text-[#c20e4d]">
-            <CalendarIcon size={14} />
-            <span>
-              {row.original.verifiedOn
+          <ColumnBadge
+            color={row.original.verifiedOn ? "info" : "error"}
+            icon={<CalendarIcon size={14} />}
+            text={
+              row.original.verifiedOn
                 ? moment(row.original.verifiedOn).format("DD MMM YYYY")
-                : "Not Verified"}
-            </span>
-          </Badge>
+                : "Not Verified"
+            }
+          />
         );
       },
     },

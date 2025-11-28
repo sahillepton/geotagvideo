@@ -2,13 +2,34 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { supabase } from "./supabase";
 import Papa from "papaparse";
-import FFmpeg from "@ffmpeg/ffmpeg";
-import { fetchFile } from "@ffmpeg/util";
 
 // Tailwind class merge
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+export function sumTimestamps(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
+    2,
+    "0"
+  )}`;
+}
+const avatarColors = [
+  { bg: "bg-green-200", text: "text-green-800" },
+  { bg: "bg-blue-200", text: "text-blue-800" },
+  { bg: "bg-red-200", text: "text-red-800" },
+  { bg: "bg-yellow-200", text: "text-yellow-800" },
+  { bg: "bg-purple-200", text: "text-purple-800" },
+  { bg: "bg-pink-200", text: "text-pink-800" },
+  { bg: "bg-indigo-200", text: "text-indigo-800" },
+];
+
+export const getRandomAvatarColor = () => {
+  const randomIndex = Math.floor(Math.random() * avatarColors.length);
+  return avatarColors[randomIndex];
+};
 
 interface TrackPoint {
   Latitude: number;
