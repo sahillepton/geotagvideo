@@ -1,10 +1,9 @@
-// @ts-nocheck
 "use client";
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { PanelGroup, Panel, PanelResizeHandle } from "react-resizable-panels";
-import { VideoPlayer } from "./VideoPlayer";
-import { SimpleMap } from "./SimpleMap";
-import { useThree } from "@react-three/fiber";
+import VideoPlayer from "./VideoPlayer";
+import Map from "@/components/map";
+import { useVideo } from "@/lib/video-store";
 
 declare global {
   interface Window {
@@ -12,16 +11,22 @@ declare global {
   }
 }
 
-export function VideoWithMap({
+const VideoWithMap = ({
   videoUrl,
   locationData,
   initialX,
   initialY,
   createdAt,
   state,
-}) {
-  const [video, setVideo] = useState(null);
-  const [rotationAngle, setRotationAngle] = useState(0);
+}: {
+  videoUrl: string;
+  locationData: any[];
+  initialX: number;
+  initialY: number;
+  createdAt: string;
+  state: string;
+}) => {
+  const { video } = useVideo();
 
   const sortedData = useMemo(() => {
     if (!locationData || !Array.isArray(locationData)) return [];
@@ -86,12 +91,9 @@ export function VideoWithMap({
         <div className="w-full h-full rounded-xl overflow-hidden shadow-lg border border-gray-300">
           <VideoPlayer
             url={videoUrl}
-            video={video}
-            setVideo={setVideo}
             initialTimestamp={initialTimestamp}
             locationData={sortedData}
             createdAt={createdAt}
-            onRotationChange={setRotationAngle}
           />
         </div>
       </Panel>
@@ -99,16 +101,12 @@ export function VideoWithMap({
       <Panel defaultSize={50} minSize={30}>
         <div className="w-full h-full rounded-xl overflow-hidden shadow-lg border border-gray-300">
           {video && (
-            <SimpleMap
-              data={sortedData}
-              video={video}
-              createdAt={createdAt}
-              state={state}
-              rotationAngle={rotationAngle}
-            />
+            <Map data={sortedData} createdAt={createdAt} state={state} />
           )}
         </div>
       </Panel>
     </PanelGroup>
   );
-}
+};
+
+export default VideoWithMap;

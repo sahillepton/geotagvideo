@@ -7,7 +7,7 @@ interface MetadataColumnProps {
   data: string;
 }
 
-export const MetadataColumn = ({ icon, data }: MetadataColumnProps) => {
+const MetadataColumn = ({ icon, data }: MetadataColumnProps) => {
   return (
     <div className="flex items-center gap-2">
       {icon}
@@ -15,3 +15,5 @@ export const MetadataColumn = ({ icon, data }: MetadataColumnProps) => {
     </div>
   );
 };
+
+export default MetadataColumn;

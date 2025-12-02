@@ -16,6 +16,14 @@ export function sumTimestamps(totalSeconds: number) {
     "0"
   )}`;
 }
+
+// Format time in seconds to M:SS or MM:SS format
+export function formatTime(t: number): string {
+  if (!t) return "0:00";
+  const min = Math.floor(t / 60);
+  const sec = Math.floor(t % 60);
+  return `${min}:${sec < 10 ? "0" : ""}${sec}`;
+}
 const avatarColors = [
   { bg: "bg-green-200", text: "text-green-800" },
   { bg: "bg-blue-200", text: "text-blue-800" },
@@ -218,6 +226,51 @@ export const handleDownloadVideo = async (surveyId: string) => {
   } catch (err) {
     console.error("Error downloading video:", err);
   }
+};
+
+// Calculate distance between two coordinates using Haversine formula
+export const calcDistance = (
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number => {
+  const toRad = (v: number) => (v * Math.PI) / 180;
+  const R = 6371e3; // Earth radius in meters
+  const φ1 = toRad(lat1);
+  const φ2 = toRad(lat2);
+  const Δφ = toRad(lat2 - lat1);
+  const Δλ = toRad(lng2 - lng1);
+  const a =
+    Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
+// Smooth GPS points for polyline using moving average
+export const getSmoothedPath = (
+  points: any[],
+  windowSize: number = 3
+): any[] => {
+  if (!points || points.length === 0) return [];
+  if (typeof window === "undefined" || !window.google?.maps?.LatLng) {
+    // Fallback if Google Maps is not available
+    return points.map((point) => ({
+      lat: parseFloat(point.Latitude),
+      lng: parseFloat(point.Longitude),
+    }));
+  }
+
+  return points.map((point, idx, arr) => {
+    const start = Math.max(0, idx - Math.floor(windowSize / 2));
+    const end = Math.min(arr.length, idx + Math.floor(windowSize / 2));
+    const slice = arr.slice(start, end);
+    const lat =
+      slice.reduce((sum, p) => sum + parseFloat(p.Latitude), 0) / slice.length;
+    const lng =
+      slice.reduce((sum, p) => sum + parseFloat(p.Longitude), 0) / slice.length;
+    return new window.google.maps.LatLng(lat, lng);
+  });
 };
 
 async function downloadM3U8AsMP4(m3u8Url: string, filename: string) {

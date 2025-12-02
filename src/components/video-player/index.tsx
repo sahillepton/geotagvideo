@@ -1,15 +1,14 @@
-// @ts-nocheck
-"use client";
-import dynamic from "next/dynamic";
-import { VideoWithMap } from "./VideoWithMap";
+import VideoWithMap from "./VideoWithMap";
 
-// Export the main component with dynamic import for SSR
-export default dynamic(() => Promise.resolve(VideoWithMap), { ssr: false });
+export default VideoWithMap;
+export { default as VideoWithMap } from "./VideoWithMap";
+export { default as VideoPlayer } from "./VideoPlayer";
+export { default as VideoSphere } from "./VideoSphere";
+export { default as VideoControls } from "./VideoControls";
+export { default as ProgressBar } from "./ProgressBar";
+export { default as VideoProgressBar } from "./VideoProgressBar";
+export { default as VolumeProgressBar } from "./VolumeProgressBar";
+export { default as RotationTracker } from "./RotationTracker";
+export { default as MetadataColumn } from "./metadata-column";
+export { default as MetadataPopover } from "./metadata-popover";
 
-// Export individual components for direct use if needed
-export { VideoPlayer } from "./VideoPlayer";
-export { SimpleMap } from "./SimpleMap";
-export { VideoSphere } from "./VideoSphere";
-export { ProgressBar } from "./ProgressBar";
-export { VideoProgressBar } from "./VideoProgressBar";
-export { VolumeProgressBar } from "./VolumeProgressBar";

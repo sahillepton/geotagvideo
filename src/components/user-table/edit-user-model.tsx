@@ -31,8 +31,6 @@ const EditUserModel = ({
   data: any;
   user: any;
 }) => {
-  // console.log(user, "user edit");
-  // console.log(currentUser, data, user, "edit user");
   const [state, formAction, isPending] = useActionState(editUser, null);
   const queryClient = useQueryClient();
 

@@ -1,39 +1,84 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useEffect, useCallback } from "react";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { MapPin, Clock } from "lucide-react";
+import MetadataPopover from "@/components/video-player/metadata-popover";
+import MetadataColumn from "@/components/video-player/metadata-column";
+import Image from "next/image";
+import {
+  useLocation,
+  useMapState,
+  useRotation,
+  useVideo,
+  useVideoStore,
+} from "@/lib/video-store";
+import { calcDistance, getSmoothedPath, formatTime } from "@/lib/utils";
 
-const Map = ({ data }: { data: any[] }) => {
-  // Check if we're on the client side
+declare global {
+  interface Window {
+    google: any;
+  }
+}
 
+const Map = ({
+  data,
+  createdAt,
+  state,
+  rotationAngle = 0,
+}: {
+  data: any[];
+  createdAt: string;
+  state: string;
+  rotationAngle?: number;
+}) => {
+  // Use video from store
+  const { video } = useVideo();
   const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<any>(null);
   const movingMarkerRef = useRef<any>(null);
-  const startMarkerRef = useRef<any>(null);
-  const endMarkerRef = useRef<any>(null);
   const coveredPolylineRef = useRef<any>(null);
   const remainingPolylineRef = useRef<any>(null);
   const shadowPolylineRef = useRef<any>(null);
-  const [map, setMap] = useState<any>(null);
+  const animationIdRef = useRef<number | null>(null);
 
-  // Smooth GPS points for polyline
-  const getSmoothedPath = (points: any[], windowSize = 3) => {
-    return points.map((point, idx, arr) => {
-      const start = Math.max(0, idx - Math.floor(windowSize / 2));
-      const end = Math.min(arr.length, idx + Math.floor(windowSize / 2));
-      const slice = arr.slice(start, end);
-      const lat =
-        slice.reduce((sum, p) => sum + parseFloat(p.Latitude), 0) /
-        slice.length;
-      const lng =
-        slice.reduce((sum, p) => sum + parseFloat(p.Longitude), 0) /
-        slice.length;
-      return new window.google.maps.LatLng(lat, lng);
-    });
-  };
+  // Use video store hooks
+  const {
+    coords,
+    setCoords,
+    distance,
+    setDistance,
+    accuracy,
+    setAccuracy,
+    timestamp,
+    setTimestamp,
+  } = useLocation();
+  const { hoverInfo, setHoverInfo, mousePosition, setMousePosition } =
+    useMapState();
+  const { rotationAngle: storeRotationAngle } = useRotation();
+
+  // Use rotationAngle from props if provided, otherwise use store
+  const currentRotationAngle = rotationAngle || storeRotationAngle;
+
+  // Function to create rotated icon
+  const createRotatedIcon = useCallback((angle: number) => {
+    return {
+      url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24">
+          <g transform="rotate(${angle} 12 12)">
+            <path d="M4.037 4.688a.495.495 0 0 1 .651-.651l16 6.5a.5.5 0 0 1-.063.947l-6.124 1.58a2 2 0 0 0-1.438 1.435l-1.579 6.126a.5.5 0 0 1-.947.063z" fill="black" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </g>
+        </svg>
+      `)}`,
+      scaledSize: new window.google.maps.Size(26, 26),
+      anchor: new window.google.maps.Point(13, 13),
+    };
+  }, []);
 
   // Initialize map and markers
   useEffect(() => {
     if (
       !mapRef.current ||
-      map ||
+      mapInstanceRef.current ||
       !data?.length ||
       typeof window === "undefined" ||
       !window.google
@@ -68,7 +113,7 @@ const Map = ({ data }: { data: any[] }) => {
         fullscreenControl: false,
       });
 
-      setMap(googleMap);
+      mapInstanceRef.current = googleMap;
 
       // Create start marker with custom HTML
       const startMarker = new window.google.maps.Marker({
@@ -80,43 +125,41 @@ const Map = ({ data }: { data: any[] }) => {
         title: "Start Point",
         icon: {
           url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-              <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="startGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style="stop-color:#10B981;stop-opacity:1" />
-                    <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
-                  </linearGradient>
-                  <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-                    <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#10B981" flood-opacity="0.4"/>
-                  </filter>
-                </defs>
-                <circle cx="16" cy="16" r="12" fill="url(#startGrad)" stroke="white" stroke-width="4" filter="url(#shadow)"/>
-                <text x="16" y="20" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">S</text>
-              </svg>
-            `)}`,
+            <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="startGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#10B981;stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+                </linearGradient>
+                <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#10B981" flood-opacity="0.4"/>
+                </filter>
+              </defs>
+              <circle cx="16" cy="16" r="12" fill="url(#startGrad)" stroke="white" stroke-width="4" filter="url(#shadow)"/>
+              <text x="16" y="20" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">S</text>
+            </svg>
+          `)}`,
           scaledSize: new window.google.maps.Size(32, 32),
           anchor: new window.google.maps.Point(16, 16),
         },
       });
 
-      startMarkerRef.current = startMarker;
-
       // Create start label
       const startInfoWindow = new window.google.maps.InfoWindow({
         content: `
-            <div style="
-              background: rgba(16, 185, 129, 0.9);
-              color: white;
-              padding: 4px 8px;
-              border-radius: 12px;
-              font-size: 11px;
-              font-weight: 600;
-              white-space: nowrap;
-              box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-              border: 1px solid rgba(255,255,255,0.3);
-              text-align: center;
-            ">START</div>
-          `,
+          <div style="
+            background: rgba(16, 185, 129, 0.9);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            text-align: center;
+          ">START</div>
+        `,
         disableAutoPan: true,
       });
       startInfoWindow.open(googleMap, startMarker);
@@ -131,63 +174,53 @@ const Map = ({ data }: { data: any[] }) => {
         title: "End Point",
         icon: {
           url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-              <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="endGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style="stop-color:#EF4444;stop-opacity:1" />
-                    <stop offset="100%" style="stop-color:#DC2626;stop-opacity:1" />
-                  </linearGradient>
-                  <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-                    <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#EF4444" flood-opacity="0.4"/>
-                  </filter>
-                </defs>
-                <circle cx="16" cy="16" r="12" fill="url(#endGrad)" stroke="white" stroke-width="4" filter="url(#shadow)"/>
-                <text x="16" y="20" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">E</text>
-              </svg>
-            `)}`,
+            <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="endGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#EF4444;stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#DC2626;stop-opacity:1" />
+                </linearGradient>
+                <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#EF4444" flood-opacity="0.4"/>
+                </filter>
+              </defs>
+              <circle cx="16" cy="16" r="12" fill="url(#endGrad)" stroke="white" stroke-width="4" filter="url(#shadow)"/>
+              <text x="16" y="20" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">E</text>
+            </svg>
+          `)}`,
           scaledSize: new window.google.maps.Size(32, 32),
           anchor: new window.google.maps.Point(16, 16),
         },
       });
 
-      endMarkerRef.current = endMarker;
-
       // Create end label
       const endInfoWindow = new window.google.maps.InfoWindow({
         content: `
-            <div style="
-              background: rgba(239, 68, 68, 0.9);
-              color: white;
-              padding: 4px 8px;
-              border-radius: 12px;
-              font-size: 11px;
-              font-weight: 600;
-              white-space: nowrap;
-              box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-              border: 1px solid rgba(255,255,255,0.3);
-              text-align: center;
-            ">END</div>
-          `,
+          <div style="
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            text-align: center;
+          ">END</div>
+        `,
         disableAutoPan: true,
       });
       endInfoWindow.open(googleMap, endMarker);
 
-      // Create moving marker as a blue circle
+      // Create moving marker
       const movingMarker = new window.google.maps.Marker({
         position: {
           lat: parseFloat(firstPoint.Latitude),
           lng: parseFloat(firstPoint.Longitude),
         },
         map: googleMap,
-        icon: {
-          url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-              <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="8" cy="8" r="6" fill="#3B82F6" stroke="#3B82F6" stroke-width="2" fill-opacity="0.9"/>
-              </svg>
-            `)}`,
-          scaledSize: new window.google.maps.Size(16, 16),
-          anchor: new window.google.maps.Point(8, 8),
-        },
+        icon: createRotatedIcon(currentRotationAngle),
       });
 
       movingMarkerRef.current = movingMarker;
@@ -247,15 +280,291 @@ const Map = ({ data }: { data: any[] }) => {
 
       // Store references for updating
       movingMarker.fullPath = smoothedPath;
+
+      // Create a reusable click handler function - always gets fresh video from store
+      const handleRouteClick = (event: any) => {
+        const clickedLatLng = event.latLng;
+
+        // Find the closest GPS point to the clicked location
+        let closestPoint = data[0];
+        let minDistance = Infinity;
+
+        data.forEach((point) => {
+          const pointLatLng = new window.google.maps.LatLng(
+            parseFloat(point.Latitude),
+            parseFloat(point.Longitude)
+          );
+          const distance =
+            window.google.maps.geometry.spherical.computeDistanceBetween(
+              clickedLatLng,
+              pointLatLng
+            );
+
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestPoint = point;
+          }
+        });
+
+        // Jump to the timestamp of the closest point - always get fresh video from store
+        const currentVideo = useVideoStore.getState().video;
+        if (currentVideo && closestPoint) {
+          let timestamp = null;
+
+          if (closestPoint.timeStamp !== undefined) {
+            timestamp = parseFloat(closestPoint.timeStamp);
+          }
+
+          if (timestamp !== null && !isNaN(timestamp) && timestamp >= 0) {
+            currentVideo.currentTime = timestamp;
+          } else {
+            console.error(
+              "No valid timestamp found in closest point:",
+              closestPoint
+            );
+          }
+        } else if (!currentVideo) {
+          console.warn("Video not available in store for route click");
+        }
+      };
+
+      // Store map reference for mouse events
+      mapRef.current.addEventListener("mousemove", (e) => {
+        const rect = mapRef.current?.getBoundingClientRect();
+        setMousePosition({
+          x: e.clientX - (rect?.left ?? 0),
+          y: e.clientY - (rect?.top ?? 0),
+        });
+      });
+
+      // Create hover handler function
+      const handleRouteHover = (event: any) => {
+        const clickedLatLng = event.latLng;
+
+        // Find the closest GPS point to the hovered location
+        let closestPoint = data[0];
+        let minDistance = Infinity;
+
+        data.forEach((point) => {
+          const pointLatLng = new window.google.maps.LatLng(
+            parseFloat(point.Latitude),
+            parseFloat(point.Longitude)
+          );
+          const distance =
+            window.google.maps.geometry.spherical.computeDistanceBetween(
+              clickedLatLng,
+              pointLatLng
+            );
+
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestPoint = point;
+          }
+        });
+
+        if (closestPoint && closestPoint.timeStamp !== undefined) {
+          const timestamp = parseFloat(closestPoint.timeStamp);
+          const lat = parseFloat(closestPoint.Latitude).toFixed(6);
+          const lng = parseFloat(closestPoint.Longitude).toFixed(6);
+
+          setHoverInfo({
+            timestamp: formatTime(timestamp),
+            lat,
+            lng,
+          });
+        }
+      };
+
+      // Handle mouse leave to close tooltip
+      const handleRouteMouseOut = () => {
+        setHoverInfo(null);
+      };
+
+      // Add hover handlers to both polylines
+      coveredPolyline.addListener("mouseover", handleRouteHover);
+      coveredPolyline.addListener("mouseout", handleRouteMouseOut);
+      remainingPolyline.addListener("mouseover", handleRouteHover);
+      remainingPolyline.addListener("mouseout", handleRouteMouseOut);
+
+      // Add click handler to both covered and remaining polylines
+      coveredPolyline.addListener("click", handleRouteClick);
+      remainingPolyline.addListener("click", handleRouteClick);
+
+      // Fit map to show the whole route
+      const bounds = new window.google.maps.LatLngBounds();
+      smoothedPath.forEach((point) => bounds.extend(point));
+      googleMap.fitBounds(bounds);
     }, 100);
 
     return () => {
       clearTimeout(timer);
       // Google Maps cleanup is handled automatically
     };
-  }, [mapRef, map, data]);
+  }, [mapRef, data, currentRotationAngle]);
 
-  // Smooth marker movement with requestAnimationFrame
+  useEffect(() => {
+    if (!data?.length || typeof window === "undefined") return;
+
+    const updateMarker = () => {
+      // Always get fresh video from store
+      const currentVideo = useVideoStore.getState().video;
+      if (
+        !currentVideo ||
+        !movingMarkerRef.current ||
+        !mapInstanceRef.current
+      ) {
+        if (animationIdRef.current) {
+          cancelAnimationFrame(animationIdRef.current);
+          animationIdRef.current = null;
+        }
+        return;
+      }
+
+      const t = currentVideo.currentTime;
+      setTimestamp(t);
+
+      // Find two surrounding points
+      let prev = data[0];
+      let next = data[data.length - 1];
+      for (let i = 0; i < data.length - 1; i++) {
+        if (
+          parseFloat(data[i].timeStamp) <= t &&
+          t <= parseFloat(data[i + 1].timeStamp)
+        ) {
+          prev = data[i];
+          next = data[i + 1];
+          break;
+        }
+      }
+
+      const ratio =
+        (t - parseFloat(prev.timeStamp)) /
+        (parseFloat(next.timeStamp) - parseFloat(prev.timeStamp));
+
+      const lat =
+        parseFloat(prev.Latitude) +
+        ratio * (parseFloat(next.Latitude) - parseFloat(prev.Latitude));
+      const lng =
+        parseFloat(prev.Longitude) +
+        ratio * (parseFloat(next.Longitude) - parseFloat(prev.Longitude));
+
+      const pos = new window.google.maps.LatLng(lat, lng);
+      if (movingMarkerRef.current) {
+        movingMarkerRef.current.setPosition(pos);
+      }
+
+      setCoords({ lat: lat.toFixed(6), lng: lng.toFixed(6) });
+
+      const accuracyValue = prev.Accuracy ? parseFloat(prev.Accuracy) : 0;
+      setAccuracy(accuracyValue * 100);
+
+      const dist = calcDistance(
+        parseFloat(data[0].Latitude),
+        parseFloat(data[0].Longitude),
+        lat,
+        lng
+      );
+      setDistance(dist.toFixed(1));
+
+      // Update covered and remaining route polylines
+      if (
+        movingMarkerRef.current?.fullPath &&
+        coveredPolylineRef.current &&
+        remainingPolylineRef.current
+      ) {
+        const fullPath = movingMarkerRef.current.fullPath;
+        const currentIndex = Math.floor(
+          (t / parseFloat(data[data.length - 1].timeStamp)) * fullPath.length
+        );
+
+        // Split the path into covered and remaining parts
+        const coveredPath = fullPath.slice(
+          0,
+          Math.max(0, Math.min(currentIndex + 1, fullPath.length))
+        );
+        const remainingPath = fullPath.slice(
+          Math.max(0, Math.min(currentIndex, fullPath.length))
+        );
+
+        // Update the polylines
+        coveredPolylineRef.current.setPath(coveredPath);
+        remainingPolylineRef.current.setPath(remainingPath);
+      }
+
+      // Continue animation if video is playing - get fresh video
+      const freshVideo = useVideoStore.getState().video;
+      if (freshVideo && !freshVideo.paused) {
+        animationIdRef.current = requestAnimationFrame(updateMarker);
+      } else {
+        animationIdRef.current = null;
+      }
+    };
+
+    // Handle video events
+    const handlePlay = () => {
+      if (animationIdRef.current) {
+        cancelAnimationFrame(animationIdRef.current);
+      }
+      animationIdRef.current = requestAnimationFrame(updateMarker);
+    };
+
+    const handlePause = () => {
+      if (animationIdRef.current) {
+        cancelAnimationFrame(animationIdRef.current);
+        animationIdRef.current = null;
+      }
+    };
+
+    const handleSeek = () => {
+      if (animationIdRef.current) {
+        cancelAnimationFrame(animationIdRef.current);
+      }
+      updateMarker();
+      const freshVideo = useVideoStore.getState().video;
+      if (freshVideo && !freshVideo.paused) {
+        animationIdRef.current = requestAnimationFrame(updateMarker);
+      }
+    };
+
+    // Use video from hook for event listeners
+    if (video) {
+      video.addEventListener("play", handlePlay);
+      video.addEventListener("pause", handlePause);
+      video.addEventListener("seeked", handleSeek);
+      video.addEventListener("loadedmetadata", updateMarker);
+
+      // Start animation loop
+      if (!video.paused) {
+        animationIdRef.current = requestAnimationFrame(updateMarker);
+      } else {
+        // Still update once even if paused
+        updateMarker();
+      }
+    } else {
+      // Update once even if no video yet (will use fresh video from store in updateMarker)
+      updateMarker();
+    }
+
+    return () => {
+      if (animationIdRef.current) {
+        cancelAnimationFrame(animationIdRef.current);
+        animationIdRef.current = null;
+      }
+      const videoToClean = useVideoStore.getState().video;
+      if (videoToClean) {
+        videoToClean.removeEventListener("play", handlePlay);
+        videoToClean.removeEventListener("pause", handlePause);
+        videoToClean.removeEventListener("seeked", handleSeek);
+        videoToClean.removeEventListener("loadedmetadata", updateMarker);
+      }
+    };
+  }, [data, setCoords, setDistance, setAccuracy, setTimestamp, video]);
+
+  // Update marker icon rotation when currentRotationAngle changes
+  useEffect(() => {
+    if (!movingMarkerRef.current || !mapInstanceRef.current) return;
+    movingMarkerRef.current.setIcon(createRotatedIcon(currentRotationAngle));
+  }, [currentRotationAngle, createRotatedIcon]);
 
   if (typeof window === "undefined") {
     return <div>Loading map...</div>;
@@ -315,10 +624,138 @@ const Map = ({ data }: { data: any[] }) => {
   }
 
   return (
-    <div className="relative w-full h-screen mt-2 rounded">
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <MetadataPopover>
+        <div className="space-y-2 text-sm text-neutral-700">
+          {/* Time */}
+          <MetadataColumn
+            icon={<Image src={"/time.svg"} alt="Time" width={16} height={16} />}
+            data={formatTime(timestamp)}
+          />
+
+          {/* Lat / Lng */}
+          <MetadataColumn
+            icon={
+              <Image
+                src={"/location.svg"}
+                alt="Location"
+                width={16}
+                height={16}
+              />
+            }
+            data={`${coords.lat}, ${coords.lng}`}
+          />
+
+          {/* Distance */}
+          <MetadataColumn
+            icon={
+              <Image
+                src={"/Distance.svg"}
+                alt="Distance"
+                width={16}
+                height={16}
+              />
+            }
+            data={`${distance} m`}
+          />
+
+          {/* Date */}
+          <MetadataColumn
+            icon={
+              <Image
+                src={"/calendar.svg"}
+                alt="Calendar"
+                width={16}
+                height={16}
+              />
+            }
+            data={new Date(createdAt).toISOString().split("T")[0]}
+          />
+
+          {/* Time */}
+          <MetadataColumn
+            icon={
+              <Image
+                src={"/calendar.svg"}
+                alt="Calendar"
+                width={16}
+                height={16}
+              />
+            }
+            data={new Date(createdAt).toISOString().split("T")[1].slice(0, 5)}
+          />
+
+          {/* Accuracy */}
+          {state?.toLowerCase() === "madhya pradesh" && (
+            <MetadataColumn
+              icon={
+                <Image
+                  src={"/Distance.svg"}
+                  alt="Distance"
+                  width={16}
+                  height={16}
+                />
+              }
+              data={`${accuracy} m`}
+            />
+          )}
+        </div>
+      </MetadataPopover>
+
+      {/* Custom Hover Tooltip */}
+      {hoverInfo && (
+        <div
+          className="absolute z-[10000] pointer-events-none"
+          style={{
+            left: mousePosition.x + 10,
+            top: mousePosition.y - 10,
+            transform: "translate(0, -100%)",
+          }}
+        >
+          <TooltipProvider>
+            <div className="bg-popover text-popover-foreground rounded-md border px-3 py-2 text-sm shadow-md animate-in fade-in-0 zoom-in-95">
+              <div className="font-semibold text-foreground mb-2 pb-1 border-b">
+                Route Info
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-3 w-3 text-green-600" />
+                  <span className="text-xs text-muted-foreground">Time:</span>
+                  <span className="text-xs font-semibold text-green-600">
+                    {hoverInfo.timestamp}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-3 w-3 text-red-500" />
+                  <span className="text-xs text-muted-foreground">Lat:</span>
+                  <span className="text-xs font-mono text-red-600">
+                    {hoverInfo.lat}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-3 w-3 text-red-500" />
+                  <span className="text-xs text-muted-foreground">Lng:</span>
+                  <span className="text-xs font-mono text-red-600">
+                    {hoverInfo.lng}
+                  </span>
+                </div>
+              </div>
+              <div className="text-xs text-muted-foreground text-center mt-2 pt-1 border-t">
+                Click to seek to this point
+              </div>
+            </div>
+          </TooltipProvider>
+        </div>
+      )}
+
       <div
         ref={mapRef}
-        className="w-full h-full min-h-[400px] bg-gray-100 rounded"
+        style={{
+          width: "100%",
+          height: "100%",
+          minHeight: "400px",
+          backgroundColor: "#f0f0f0",
+        }}
       />
     </div>
   );

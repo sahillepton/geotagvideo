@@ -22,7 +22,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { addUser } from "./action";
 import { toast } from "sonner";
 import { Loader2, PlusIcon } from "lucide-react";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 
 const AddUserModal = ({
   currentUser,
@@ -33,7 +33,7 @@ const AddUserModal = ({
 }) => {
   const [state, formAction, isPending] = useActionState(addUser, null);
   const queryClient = useQueryClient();
-
+  const [open, setOpen] = useState(false);
   useEffect(() => {
     if (state?.message) {
       toast.success(state.message);
@@ -42,7 +42,7 @@ const AddUserModal = ({
   }, [state?.message, queryClient]);
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="flex items-center gap-2 h-8">
           <PlusIcon size={16} />
@@ -199,7 +199,13 @@ const AddUserModal = ({
           </div>
 
           <DialogFooter className="mt-6 flex justify-end gap-3">
-            <Button variant="outline">Cancel</Button>
+            <Button
+              type="button"
+              onClick={() => setOpen(false)}
+              variant="outline"
+            >
+              Cancel
+            </Button>
             <Button type="submit" disabled={isPending}>
               {isPending ? <Loader2 className="animate-spin" /> : "Add User"}
             </Button>

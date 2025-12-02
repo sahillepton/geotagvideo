@@ -1,7 +1,12 @@
-// @ts-nocheck
 "use client";
 
-import { flexRender } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+  Table as TanstackTable,
+} from "@tanstack/react-table";
 
 import {
   Table,
@@ -12,24 +17,34 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 
-interface DataTableProps {
-  columns: any;
-  data: any;
+interface DataTableProps<TData, TValue> {
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
   isFetching: boolean;
-  table: any;
+  table?: TanstackTable<TData>;
+  onRowClick?: (row: TData) => void;
+  skeletonRows?: number;
+  emptyMessage?: string;
 }
 
-export function DataTable({
+export function DataTable<TData, TValue>({
   columns,
   data,
   isFetching,
-  table,
-}: DataTableProps) {
-  const router = useRouter();
-  const skeletonRows = 10;
+  table: externalTable,
+  onRowClick,
+  skeletonRows = 10,
+  emptyMessage = "No results.",
+}: DataTableProps<TData, TValue>) {
+  // Use external table if provided, otherwise create one
+  const internalTable = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  });
+
+  const table = externalTable || internalTable;
 
   return (
     <div className="overflow-hidden rounded-md border">
@@ -71,11 +86,8 @@ export function DataTable({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
-                className={`cursor-pointer`}
-                onClick={() => {
-                  router.push(`/video/${row.original.surveyId}`);
-                  toast.success("Redirecting to video player");
-                }}
+                className={onRowClick ? "cursor-pointer" : ""}
+                onClick={() => onRowClick?.(row.original)}
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
@@ -87,7 +99,7 @@ export function DataTable({
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
+                {emptyMessage}
               </TableCell>
             </TableRow>
           )}

@@ -1,73 +1,72 @@
-// @ts-nocheck
 "use client";
-import React, { useRef, useState, useEffect, Suspense } from "react";
+import React, { useRef, useEffect, Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import Hls from "hls.js";
 import { XR, createXRStore } from "@react-three/xr";
-import {
-  Play,
-  Pause,
-  Volume2,
-  VolumeX,
-  Volume1,
-  Loader2,
-  Maximize,
-  Minimize,
-  Clock,
-  MapPin,
-} from "lucide-react";
-import { VideoSphere } from "./VideoSphere";
-import { ProgressBar } from "./ProgressBar";
+import { Loader2 } from "lucide-react";
+import VideoSphere from "./VideoSphere";
+import VideoControls from "./VideoControls";
 import MetadataPopover from "./metadata-popover";
-import { MetadataColumn } from "./metadata-column";
+import MetadataColumn from "./metadata-column";
 import Image from "next/image";
-import { RotationTracker } from "./RotationTracker";
+import RotationTracker from "./RotationTracker";
+import {
+  useVideo,
+  usePlayback,
+  useVolume,
+  useQuality,
+  useLoading,
+  useVideoUI,
+  useLocation,
+  useRotation,
+} from "@/lib/video-store";
+import { calcDistance } from "@/lib/utils";
 
 const store = createXRStore();
 
-export const VideoPlayer = ({
+const VideoPlayer = ({
   url,
-  video,
-  setVideo,
   initialTimestamp = 1,
   locationData = [],
   createdAt,
-  onRotationChange,
+}: {
+  url: string;
+  initialTimestamp: number;
+  locationData: any[];
+  createdAt: string;
 }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [volume, setVolume] = useState(0.5);
-  const [isMuted, setIsMuted] = useState(true);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [qualities, setQualities] = useState([]);
-  const [selectedQuality, setSelectedQuality] = useState("Auto");
-  const [isBuffering, setIsBuffering] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showControls, setShowControls] = useState(false);
-  const [coords, setCoords] = useState({ lat: 0, lng: 0 });
-  const [distance, setDistance] = useState(0);
-  const [isInitializing, setIsInitializing] = useState(true);
-  const [loadProgress, setLoadProgress] = useState(0);
-  const [loadStartTime, setLoadStartTime] = useState(Date.now());
-  const containerRef = useRef(null);
-  const hideControlsTimeoutRef = useRef(null);
+  // Use video store hooks
+  const { video, setVideo } = useVideo();
+  const {
+    isPlaying,
+    setIsPlaying,
+    progress,
+    setProgress,
+    currentTime,
+    setCurrentTime,
+    duration,
+    setDuration,
+  } = usePlayback();
+  const { volume, setVolume } = useVolume();
+  const { qualities, setQualities } = useQuality();
+  const {
+    isBuffering,
+    setIsBuffering,
+    isInitializing,
+    setIsInitializing,
+    loadProgress,
+    setLoadProgress,
+    loadStartTime,
+    setLoadStartTime,
+  } = useLoading();
+  const { isFullscreen, setIsFullscreen, showControls, setShowControls } =
+    useVideoUI();
+  const { coords, setCoords, distance, setDistance } = useLocation();
+  const { rotationAngle, setRotationAngle } = useRotation();
 
-  // Calculate distance between two coordinates
-  const calcDistance = (lat1, lng1, lat2, lng2) => {
-    const toRad = (v) => (v * Math.PI) / 180;
-    const R = 6371e3;
-    const φ1 = toRad(lat1);
-    const φ2 = toRad(lat2);
-    const Δφ = toRad(lat2 - lat1);
-    const Δλ = toRad(lng2 - lng1);
-    const a =
-      Math.sin(Δφ / 2) ** 2 +
-      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  };
+  const containerRef = useRef<HTMLDivElement>(null);
+  const hideControlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Update geolocation data based on current video time
   useEffect(() => {
@@ -218,7 +217,7 @@ export const VideoPlayer = ({
     return () => {
       videoEl.remove();
     };
-  }, [url, video, setVideo]);
+  }, [url, video, setVideo, volume]);
 
   const togglePlay = () => {
     if (!video) return;
@@ -384,23 +383,6 @@ export const VideoPlayer = ({
     };
   }, []);
 
-  const toggleMute = () => {
-    if (!video) return;
-    video.muted = !video.muted;
-    setIsMuted(video.muted);
-  };
-
-  const handleSeek = (percent) => {
-    setProgress(percent);
-    if (video?.duration) video.currentTime = (percent / 100) * video.duration;
-  };
-
-  const handleVolumeChange = (v) => {
-    setVolume(v);
-    if (video) video.volume = v;
-    setIsMuted(v === 0);
-  };
-
   useEffect(() => {
     if (!video) return;
 
@@ -453,16 +435,6 @@ export const VideoPlayer = ({
     };
   }, [video]);
 
-  const formatTime = (t) => {
-    if (!t) return "0:00";
-    const minutes = Math.floor(t / 60);
-    const seconds = Math.floor(t % 60);
-    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-  };
-
-  const VolumeIcon =
-    isMuted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
-
   return (
     <div
       ref={containerRef}
@@ -490,12 +462,8 @@ export const VideoPlayer = ({
         >
           <XR store={store}>
             <OrbitControls enableZoom={false} enablePan={false} />
-            {onRotationChange && (
-              <RotationTracker onRotationChange={onRotationChange} />
-            )}
-            <Suspense fallback={null}>
-              {video && <VideoSphere video={video} />}
-            </Suspense>
+            <RotationTracker />
+            <Suspense fallback={null}>{video && <VideoSphere />}</Suspense>
           </XR>
         </Canvas>
       </div>
@@ -577,83 +545,9 @@ export const VideoPlayer = ({
       )}
 
       {/* Controls */}
-      <div
-        className={`absolute bottom-3 left-0 w-full p-3 bg-black/60 backdrop-blur-sm flex flex-col gap-2 z-50 transition-all duration-300 ${
-          showControls
-            ? "opacity-100 translate-y-0"
-            : "opacity-0 translate-y-4 pointer-events-none"
-        }`}
-        onClick={(e) => e.stopPropagation()}
-        onMouseEnter={() => {
-          setShowControls(true);
-          if (hideControlsTimeoutRef.current) {
-            clearTimeout(hideControlsTimeoutRef.current);
-          }
-        }}
-        onMouseLeave={() => {
-          if (isPlaying) {
-            hideControlsTimeoutRef.current = setTimeout(() => {
-              setShowControls(false);
-            }, 1000); // Shorter timeout when leaving controls area
-          }
-        }}
-      >
-        <ProgressBar value={progress} onChange={handleSeek} />
-
-        <div className="flex justify-between items-center text-white text-sm mt-2">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={togglePlay}
-              className="p-2 rounded-full hover:bg-white/20 transition"
-            >
-              {isPlaying ? <Pause size={16} /> : <Play size={16} />}
-            </button>
-            <button
-              onClick={toggleMute}
-              className="p-2 rounded-full hover:bg-white/20 transition"
-            >
-              <VolumeIcon size={16} />
-            </button>
-            <ProgressBar
-              value={volume}
-              onChange={handleVolumeChange}
-              isVolume
-            />
-            <span>
-              {formatTime(currentTime)} / {formatTime(duration)}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {qualities.length > 0 && (
-              <select
-                value={selectedQuality}
-                onChange={(e) => {
-                  const idx = qualities.findIndex(
-                    (q) => q.label === e.target.value
-                  );
-                  if (video?.hls) video.hls.currentLevel = qualities[idx].index;
-                  setSelectedQuality(e.target.value);
-                }}
-                className="bg-gray-900 text-white text-xs px-2 py-1 rounded border border-gray-600"
-              >
-                {qualities.map((q) => (
-                  <option key={q.label} value={q.label}>
-                    {q.label}
-                  </option>
-                ))}
-              </select>
-            )}
-            <button
-              onClick={toggleFullscreen}
-              className="p-2 rounded-full hover:bg-white/20 transition"
-              title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-            >
-              {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
-            </button>
-          </div>
-        </div>
-      </div>
+      <VideoControls containerRef={containerRef} />
     </div>
   );
 };
+
+export default VideoPlayer;

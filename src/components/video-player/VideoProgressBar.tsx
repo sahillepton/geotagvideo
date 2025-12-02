@@ -1,17 +1,28 @@
-// @ts-nocheck
 "use client";
 import { useRef } from "react";
+import { usePlayback, useVideo } from "@/lib/video-store";
 
-export const VideoProgressBar = ({ value, onChange, className = "" }) => {
-  const progressRef = useRef(null);
+interface VideoProgressBarProps {
+  className?: string;
+}
 
-  const handleClick = (e) => {
-    if (!progressRef.current) return;
+const VideoProgressBar = ({ className = "" }: VideoProgressBarProps) => {
+  const progressRef = useRef<HTMLDivElement>(null);
+  const { progress, setProgress } = usePlayback();
+  const { video } = useVideo();
+
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!progressRef.current || !video) return;
 
     const rect = progressRef.current.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const percentage = (clickX / rect.width) * 100;
-    onChange(percentage);
+
+    // Update progress for video seek
+    setProgress(percentage);
+    if (video.duration) {
+      video.currentTime = (percentage / 100) * video.duration;
+    }
   };
 
   return (
@@ -22,12 +33,14 @@ export const VideoProgressBar = ({ value, onChange, className = "" }) => {
     >
       <div
         className="absolute top-0 left-0 h-full bg-white rounded-full transition-all duration-150"
-        style={{ width: `${value}%` }}
+        style={{ width: `${progress}%` }}
       />
       <div
         className="absolute top-1/2 transform -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-md transition-all duration-150 hover:scale-110"
-        style={{ left: `calc(${value}% - 6px)` }}
+        style={{ left: `calc(${progress}% - 6px)` }}
       />
     </div>
   );
 };
+
+export default VideoProgressBar;

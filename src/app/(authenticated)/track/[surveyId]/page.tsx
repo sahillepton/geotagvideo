@@ -1,15 +1,11 @@
-//@ts-nocheck
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import VideoWithMap from "@/components/video-player";
-import MP4VideoWithMap from "@/components/video-player/mp4-player";
 import { createClient } from "@/lib/supabase-server";
-import { ArrowLeftIcon, PlusIcon } from "lucide-react";
+import { ArrowLeftIcon } from "lucide-react";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import axios from "axios";
 import Map from "@/components/map";
 
 export const experimental_ppr = true;
@@ -109,7 +105,13 @@ const TrackPage = async ({
           </div>
         }
       >
-        <Map data={parsedLocationData} />
+        <Map
+          data={parsedLocationData}
+          createdAt={
+            surveyData?.gps_tracks?.created_at || new Date().toISOString()
+          }
+          state={surveyData?.state || ""}
+        />
       </Suspense>
     </div>
   );
