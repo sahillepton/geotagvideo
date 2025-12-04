@@ -102,8 +102,6 @@ function geojsonToKml(geojson: any) {
 }
 
 const downloadBlob = (blob: Blob, filename: string) => {
-  console.log(blob, "blob");
-  console.log(filename, "filename");
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
 
@@ -188,7 +186,7 @@ export const handleDownloadGeoJSON = async (gpsTrackId: string) => {
     downloadCSV(points, data.name);
     downloadKML(kml, data.name);
 
-    console.log("Files downloaded:", data.name);
+    // console.log("Files downloaded:", data.name);
   } catch (err) {
     console.error("Error downloading GPS data:", err);
   }
@@ -294,12 +292,12 @@ async function downloadM3U8AsMP4(m3u8Url: string, filename: string) {
       }
     }
 
-    console.log(`Found ${segments.length} segments`);
+    // console.log(`Found ${segments.length} segments`);
 
     // Download all segments
     const downloadedSegments = [];
     for (let i = 0; i < segments.length; i++) {
-      console.log(`Downloading segment ${i + 1}/${segments.length}`);
+      // console.log(`Downloading segment ${i + 1}/${segments.length}`);
       const res = await fetch(segments[i]);
       const arrayBuffer = await res.arrayBuffer();
       downloadedSegments.push(arrayBuffer);
@@ -329,7 +327,7 @@ async function downloadM3U8AsMP4(m3u8Url: string, filename: string) {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    console.log("Download complete!");
+    //  console.log("Download complete!");
     return true;
   } catch (error) {
     console.error("Download failed:", error);

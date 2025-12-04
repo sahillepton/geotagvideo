@@ -12,7 +12,7 @@ export async function GET(
   { params }: { params: Promise<Params> }
 ) {
   const { "playback-id": playbackId } = await params;
-  console.log(playbackId);
+  //  console.log(playbackId);
   try {
     const url = `https://api.mux.com/video/v1/playback-ids/${playbackId}`;
 
@@ -27,7 +27,7 @@ export async function GET(
 
     const playbackData = playbackRes.data;
 
-    console.log(playbackData);
+    //   console.log(playbackData);
 
     const asset_id = playbackData.data.object.id;
 
@@ -35,7 +35,7 @@ export async function GET(
     const assetRes = await axios.get(asset_url, { headers });
 
     const asset_data = assetRes.data;
-    console.log(asset_data);
+    // console.log(asset_data);
 
     return NextResponse.json({
       message: "Mux status fetched",

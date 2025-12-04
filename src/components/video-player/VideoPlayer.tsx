@@ -185,7 +185,7 @@ const VideoPlayer = ({
       setIsInitializing(false);
       setLoadProgress(100);
       const loadTime = Date.now() - loadStartTime;
-      console.log(`Video loaded in ${loadTime}ms`); // Performance logging
+      //    console.log(`Video loaded in ${loadTime}ms`); // Performance logging
       // Set initial timestamp if provided
       if (initialTimestamp > 0) {
         videoEl.currentTime = initialTimestamp;

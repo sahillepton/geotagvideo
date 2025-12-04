@@ -190,11 +190,11 @@ const DownloadDialog = ({ currentUser }: { currentUser: User }) => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
-        console.log(`Batch ${batchNumber} downloaded successfully!`);
+        //   console.log(`Batch ${batchNumber} downloaded successfully!`);
         batchNumber++;
       }
 
-      console.log("All batches downloaded successfully!");
+      //  console.log("All batches downloaded successfully!");
       setIsDownloadComplete(true);
       setCurrentTrackName("");
     } catch (error) {

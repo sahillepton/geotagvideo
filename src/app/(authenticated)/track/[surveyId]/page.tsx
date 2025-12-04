@@ -1,4 +1,3 @@
-//@ts-nocheck
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase-server";
@@ -44,6 +43,8 @@ const TrackPage = async ({
       .single(),
   ]);
   const { data: surveyData, error: surveyError } = surveyResult;
+
+  // console.log(surveyData);
 
   // Parse location data if it's a JSON string
   const parsedLocationData = (() => {
