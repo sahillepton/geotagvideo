@@ -194,33 +194,43 @@ export const handleDownloadGeoJSON = async (gpsTrackId: string) => {
 
 export const handleDownloadVideo = async (surveyId: string) => {
   try {
-    const { data, error } = await supabase
+    const videoQuery = await supabase
       .from("videos")
-      .select("url, name, mux_playback_id")
+      .select("url, name")
       .eq("survey_id", surveyId)
       .single();
+    const surveyQuery = await supabase
+      .from("surveys")
+      .select("gps_track_id, gps_tracks(location_data)")
+      .eq("id", surveyId)
+      .single();
 
-    if (error) {
-      console.error("Error fetching video:", error);
+    console.log(surveyQuery.data);
+    console.log(videoQuery.data);
+    if (videoQuery.error || surveyQuery.error) {
+      console.error(
+        "Error fetching video:",
+        videoQuery.error || surveyQuery.error
+      );
       return;
     }
 
-    if (!data?.url) {
+    if (!videoQuery.data?.url) {
       console.error("No video URL found");
       return;
     }
 
-    const fileName = data.name?.endsWith(".mp4")
-      ? data.name
-      : `${data.name}.mp4`;
+    const blob = await processVideoWithCoords(
+      videoQuery.data.url,
+      surveyQuery.data.gps_tracks.location_data
+    );
 
+    const url = URL.createObjectURL(blob as Blob);
     const a = document.createElement("a");
-    a.href = data.url;
-    a.download = fileName;
-    a.target = "_blank";
-    document.body.appendChild(a);
+
+    a.href = url;
+    a.download = `${videoQuery.data.name}_with_gps_overlay.webm`;
     a.click();
-    a.remove();
   } catch (err) {
     console.error("Error downloading video:", err);
   }
@@ -271,66 +281,70 @@ export const getSmoothedPath = (
   });
 };
 
-async function downloadM3U8AsMP4(m3u8Url: string, filename: string) {
-  try {
-    // Fetch M3U8 playlist
-    const response = await fetch(m3u8Url);
-    const m3u8Content = await response.text();
+export async function processVideoWithCoords(videoUrl: string, coords: any[]) {
+  return new Promise(async (resolve) => {
+    const video = document.createElement("video");
+    video.crossOrigin = "anonymous";
+    video.src = videoUrl;
+    await video.play();
 
-    // Parse segment URLs
-    const lines = m3u8Content.split("\n").filter((line) => line.trim());
-    const segments = [];
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d")!;
 
-    for (const line of lines) {
-      if (line && !line.startsWith("#")) {
-        let segmentUrl = line.trim();
-        if (!segmentUrl.startsWith("http")) {
-          const base = m3u8Url.substring(0, m3u8Url.lastIndexOf("/") + 1);
-          segmentUrl = base + segmentUrl;
-        }
-        segments.push(segmentUrl);
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const stream = canvas.captureStream(30);
+    const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+
+    const chunks: Blob[] = [];
+
+    recorder.ondataavailable = (e) => chunks.push(e.data);
+
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, { type: "video/webm" });
+      resolve(blob);
+    };
+
+    recorder.start();
+    requestAnimationFrame(drawFrame);
+
+    function getCoord(t: number) {
+      for (let i = 0; i < coords.length - 1; i++) {
+        if (t >= coords[i].Timestamp && t < coords[i + 1].Timestamp)
+          return coords[i];
       }
+      return coords[coords.length - 1];
     }
 
-    // console.log(`Found ${segments.length} segments`);
+    function drawFrame() {
+      if (video.ended) {
+        recorder.stop();
+        return;
+      }
 
-    // Download all segments
-    const downloadedSegments = [];
-    for (let i = 0; i < segments.length; i++) {
-      // console.log(`Downloading segment ${i + 1}/${segments.length}`);
-      const res = await fetch(segments[i]);
-      const arrayBuffer = await res.arrayBuffer();
-      downloadedSegments.push(arrayBuffer);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const t = video.currentTime * 1000; // convert seconds → ms
+      const c = getCoord(t);
+
+      if (c) {
+        ctx.fillStyle = "rgba(0,0,0,0.5)";
+        ctx.fillRect(20, 20, 380, 100);
+
+        ctx.font = "22px Arial";
+        ctx.fillStyle = "white";
+        ctx.fillText(`Lat: ${c.Latitude}`, 30, 55);
+        ctx.fillText(`Lng: ${c.Longitude}`, 30, 85);
+        ctx.fillText(`Acc: ${c.Accuracy}m`, 200, 55);
+        ctx.fillText(
+          `Time: ${new Date(c.Timestamp).toLocaleTimeString()}`,
+          200,
+          85
+        );
+      }
+
+      requestAnimationFrame(drawFrame);
     }
-
-    // Merge segments
-    const totalLength = downloadedSegments.reduce(
-      (sum, seg) => sum + seg.byteLength,
-      0
-    );
-    const merged = new Uint8Array(totalLength);
-    let offset = 0;
-
-    for (const segment of downloadedSegments) {
-      merged.set(new Uint8Array(segment), offset);
-      offset += segment.byteLength;
-    }
-
-    // Create and download blob
-    const blob = new Blob([merged], { type: "video/mp4" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    //  console.log("Download complete!");
-    return true;
-  } catch (error) {
-    console.error("Download failed:", error);
-    return false;
-  }
+  });
 }

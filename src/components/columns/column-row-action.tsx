@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { supabase } from "@/lib/supabase";
-import Papa from "papaparse";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -27,7 +26,6 @@ import {
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { handleDownloadGeoJSON, handleDownloadVideo } from "@/lib/utils";
 
