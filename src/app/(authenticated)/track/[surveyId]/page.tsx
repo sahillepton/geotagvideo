@@ -9,6 +9,8 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import Map from "@/components/map";
 
+export const dynamic = "force-dynamic";
+
 const TrackPage = async ({
   params,
   searchParams,
