@@ -11,8 +11,6 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import axios from "axios";
 
-export const cacheComponents = true;
-
 const VideoPage = async ({
   params,
   searchParams,

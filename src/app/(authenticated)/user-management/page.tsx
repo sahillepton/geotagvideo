@@ -4,8 +4,6 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
-export const cacheComponents = true;
-
 const Page = async () => {
   const user = (await cookies()).get("user");
   if (!user) {
