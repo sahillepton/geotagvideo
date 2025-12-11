@@ -36,6 +36,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createSurveyColumns } from "./survey-columns";
+import ReplaceTrack from "./replace-track";
 
 export default function SurveyTable({ currentUser }: { currentUser: User }) {
   const queryClient = useQueryClient();
@@ -148,6 +149,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
         <SearchBar />
 
         <div className="flex items-center gap-2 h-8">
+          <ReplaceTrack />
           <DownloadDialog currentUser={currentUser} />
 
           <ToggleColumns table={table} />
