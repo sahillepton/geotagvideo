@@ -51,16 +51,71 @@ const VideoPage = async ({
     if (!surveyData?.gps_tracks?.location_data) return [];
 
     try {
+      let parsed: any[] = [];
+
       if (typeof surveyData.gps_tracks.location_data === "string") {
-        const parsed = JSON.parse(surveyData.gps_tracks.location_data);
-        return Array.isArray(parsed) ? parsed : [];
+        parsed = JSON.parse(surveyData.gps_tracks.location_data);
+      } else if (Array.isArray(surveyData.gps_tracks.location_data)) {
+        parsed = surveyData.gps_tracks.location_data;
+      } else {
+        return [];
       }
 
-      if (Array.isArray(surveyData.gps_tracks.location_data)) {
-        return surveyData.gps_tracks.location_data;
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        return [];
       }
 
-      return [];
+      // Normalize timestamps: convert milliseconds to relative seconds
+      // Handle both "timeStamp" and "Timestamp" property names
+      const timestampKey =
+        parsed[0].timeStamp !== undefined
+          ? "timeStamp"
+          : parsed[0].Timestamp !== undefined
+          ? "Timestamp"
+          : null;
+
+      if (!timestampKey) {
+        return parsed; // Return as-is if no timestamp field found
+      }
+
+      // Check if timestamps are in milliseconds (large numbers > 1000000)
+      const firstTimestamp = parseFloat(parsed[0][timestampKey]);
+      const isMilliseconds = firstTimestamp > 1000000;
+
+      if (isMilliseconds) {
+        // Find minimum timestamp
+        const minTimestamp = Math.min(
+          ...parsed.map((item) => parseFloat(item[timestampKey]))
+        );
+
+        // Normalize: subtract min and convert to seconds
+        const normalized = parsed.map((item) => {
+          const timestamp = parseFloat(item[timestampKey]);
+          const normalizedSeconds = (timestamp - minTimestamp) / 1000;
+
+          // Create new object with normalized timestamp
+          const normalizedItem = { ...item };
+          // Use lowercase "timeStamp" for consistency
+          delete normalizedItem[timestampKey];
+          normalizedItem.timeStamp = normalizedSeconds.toString();
+
+          return normalizedItem;
+        });
+
+        return normalized;
+      }
+
+      // If already in seconds format, ensure consistent property name
+      if (timestampKey === "Timestamp") {
+        return parsed.map((item) => {
+          const normalizedItem = { ...item };
+          normalizedItem.timeStamp = item.Timestamp;
+          delete normalizedItem.Timestamp;
+          return normalizedItem;
+        });
+      }
+
+      return parsed;
     } catch (error) {
       console.error("Error parsing location data:", error);
       return [];

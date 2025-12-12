@@ -96,7 +96,44 @@ const ReplaceTrack = () => {
           continue; // Skip Supabase operations if parsing fails
         }
 
-        // Only proceed to Supabase if JSON parsing succeeded
+        // Validate JSON structure - must be an array of objects with required properties
+        if (!Array.isArray(jsonText)) {
+          setErrors((prev) => [
+            ...prev,
+            {
+              filename: file.filename,
+              error: "JSON must be an array of objects",
+            },
+          ]);
+          continue; // Skip Supabase operations if structure is invalid
+        }
+
+        // Validate each object in the array has required properties
+        const requiredProperties = [
+          "Accuracy",
+          "Latitude",
+          "Longitude",
+          "timeStamp",
+        ];
+        const invalidIndex = jsonText.findIndex((item) => {
+          if (typeof item !== "object" || item === null) {
+            return true;
+          }
+          return !requiredProperties.every((prop) => prop in item);
+        });
+
+        if (invalidIndex !== -1) {
+          setErrors((prev) => [
+            ...prev,
+            {
+              filename: file.filename,
+              error: `Invalid structure at index ${invalidIndex}. Each object must have: Accuracy, Latitude, Longitude, timeStamp`,
+            },
+          ]);
+          continue; // Skip Supabase operations if structure is invalid
+        }
+
+        // Only proceed to Supabase if JSON parsing and validation succeeded
         const surveyId = file.filename.split(".")[0];
         const { data: surveyData, error: surveyError } = await supabase
           .from("surveys")

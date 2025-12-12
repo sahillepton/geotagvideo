@@ -76,24 +76,26 @@ export function TablePagination({
   if (totalPages <= 0) return null;
 
   return (
-    <div className="flex items-center justify-center py-4 mt-4">
-      <Pagination>
+    <div className="flex items-center justify-center mt-4">
+      <Pagination className="bg-[#f0f0f0] w-full max-w-[450px] rounded-full ">
         <PaginationContent className="gap-1">
           {/* Previous */}
-          <PaginationItem>
+          <PaginationItem className="">
             <PaginationPrevious
               href="#"
               onClick={(e) => {
                 e.preventDefault();
                 handlePrevious();
               }}
-              className="cursor-pointer"
+              className={`cursor-pointer hover:bg-transparent ${
+                currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             />
           </PaginationItem>
 
           {/* Page Numbers */}
           {getPageNumbers().map((num, idx) => (
-            <PaginationItem key={idx}>
+            <PaginationItem key={idx} className="py-1">
               {num === "..." ? (
                 <PaginationEllipsis />
               ) : (
@@ -107,8 +109,8 @@ export function TablePagination({
                   className={`px-3 py-1.5 text-sm font-medium border-none rounded-full transition-all duration-300
                     ${
                       num === currentPage
-                        ? "bg-[#006fee] text-white shadow-md scale-105"
-                        : "text-gray-800 hover:bg-gray-100 hover:scale-105"
+                        ? "bg-[#1e1e1e] text-white shadow-md scale-105 hover:bg-[#1e1e1e] hover:text-white"
+                        : "text-gray-800 hover:bg-gray-100"
                     }`}
                 >
                   {num}
@@ -125,7 +127,11 @@ export function TablePagination({
                 e.preventDefault();
                 handleNext();
               }}
-              className="cursor-pointer"
+              className={`cursor-pointer hover:bg-transparent ${
+                currentPage === totalPages
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }`}
             />
           </PaginationItem>
         </PaginationContent>
