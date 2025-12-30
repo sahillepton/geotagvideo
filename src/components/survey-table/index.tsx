@@ -51,7 +51,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
   const { dateTo } = useDateTo();
   const { open } = useSidebar();
 
-  useDebounce(search, 500);
+  const debouncedSearch = useDebounce(search, 500);
 
   const filters = useMemo(() => {
     const f: any = {
@@ -62,7 +62,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
     if (selectedDistrict) f.district = selectedDistrict;
     if (selectedBlock) f.block = selectedBlock;
     if (selectedState) f.state = selectedState;
-    if (search) f.routeName = search;
+    if (debouncedSearch) f.routeName = debouncedSearch;
     if (selectedDateFilter) f.dateKey = selectedDateFilter;
     if (dateFrom) f.dateFrom = dateFrom.toISOString().split("T")[0];
     if (dateTo) f.dateTo = dateTo.toISOString().split("T")[0];
@@ -74,7 +74,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
     selectedState,
     selectedDistrict,
     selectedBlock,
-    search,
+    debouncedSearch,
     selectedDateFilter,
     dateFrom,
     dateTo,
@@ -88,7 +88,6 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
       return JSON.parse(data.data).Result;
     },
     placeholderData: keepPreviousData,
-    staleTime: 5000,
   });
 
   const pageSize = 10;
