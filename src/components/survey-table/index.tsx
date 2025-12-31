@@ -139,11 +139,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
   });
 
   return (
-    <div
-      className={`container py-6 ${
-        open ? "max-w-[1050px]" : "max-w-[1300px]"
-      }  mx-auto transition-all duration-300`}
-    >
+    <div className={`container py-6 transition-all duration-300`}>
       <div className="mb-4 w-full flex justify-between">
         <SearchBar />
 
