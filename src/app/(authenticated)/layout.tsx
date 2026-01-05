@@ -24,7 +24,7 @@ const Layout = async ({ children }: { children: React.ReactNode }) => {
         />
       )}
 
-      <SidebarInset>
+      <SidebarInset className="overflow-hidden">
         {user && userData && <Header user={userData} />}
         {children}
       </SidebarInset>

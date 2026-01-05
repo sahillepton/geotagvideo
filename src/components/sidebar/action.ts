@@ -13,29 +13,32 @@ type RouteFilters = {
   name: string;
   dateFrom: string;
   dateTo: string;
-}
+};
 
-export type VideoListFilters = {
-  locationName: string;
-  state: string;
-  district: string;
-  block: string;
-  ring: string;
-  childRing: string;
-  routeName: string;
-  userRole: string;
-  userId: string;
-  dateKey: string;
-  dateFrom: string;
-  dateTo: string;
-} | {}
+export type VideoListFilters =
+  | {
+      locationName: string;
+      state: string;
+      district: string;
+      block: string;
+      ring: string;
+      childRing: string;
+      routeName: string;
+      userRole: string;
+      userId: string;
+      dateKey: string;
+      dateFrom: string;
+      dateTo: string;
+    }
+  | {};
 
-export async function getRoutes(filters : RouteFilters) {
+export async function getRoutes(filters: RouteFilters) {
   try {
     const supabase = await createClient();
     let query = supabase
-      .from('surveys')
-      .select(`
+      .from("surveys")
+      .select(
+        `
         id,
         name,
         timestamp,
@@ -56,49 +59,50 @@ export async function getRoutes(filters : RouteFilters) {
           url,
           duration
         )
-      `)
-      .order('created_at', { ascending: false })
+      `
+      )
+      .order("created_at", { ascending: false });
 
     if (filters.name) {
-      query = query.ilike('name', `%${filters.name}%`)
+      query = query.ilike("name", `%${filters.name}%`);
     }
     if (filters.dateFrom && filters.dateTo) {
       query = query
-        .gte('created_at', filters.dateFrom)
-        .lte('created_at', filters.dateTo)
+        .gte("created_at", filters.dateFrom)
+        .lte("created_at", filters.dateTo);
     }
 
-    const { data, error } = await query
+    const { data, error } = await query;
 
-    if (error) throw error
+    if (error) throw error;
 
     return {
       data: JSON.stringify({
         Status: "5001",
-        Result: data.map(survey => ({
+        Result: data.map((survey) => ({
           autoId: survey.id,
           routeName: survey.name,
-          isActive: survey.is_video_uploaded === 'true',
-          remarks: survey.videos?.name || 'No video uploaded',
-          createdBy: 'System',
+          isActive: survey.is_video_uploaded === "true",
+          remarks: survey.videos?.name || "No video uploaded",
+          createdBy: "System",
           createdOn: survey.created_at,
           video_url: survey.videos?.url,
           gps_data: survey.gps_tracks?.location_data,
           video_id: survey.video_id,
           gps_track_id: survey.gps_track_id,
           route_id: survey.gps_tracks?.route_id,
-          entity_id: survey.gps_tracks?.entity_id
-        }))
-      })
-    }
+          entity_id: survey.gps_tracks?.entity_id,
+        })),
+      }),
+    };
   } catch (error) {
-    console.error('Error:', error)
+    console.error("Error:", error);
     return {
       data: JSON.stringify({
         Status: "5000",
-        Message: error.message
-      })
-    }
+        Message: error.message,
+      }),
+    };
   }
 }
 
@@ -107,62 +111,66 @@ export async function deleteRoute(id: string, deletedBy: string) {
     const supabase = await createClient();
 
     const { data: survey, error: fetchError } = await supabase
-      .from('surveys')
-      .select('video_id, gps_track_id')
-      .eq('id', id)
-      .single()
+      .from("surveys")
+      .select("video_id, gps_track_id")
+      .eq("id", id)
+      .single();
 
-    if (fetchError) throw fetchError
+    if (fetchError) throw fetchError;
 
     if (survey.video_id) {
       const { error: videoError } = await supabase
-        .from('videos')
+        .from("videos")
         .delete()
-        .eq('id', survey.video_id)
+        .eq("id", survey.video_id);
 
-      if (videoError) throw videoError
+      if (videoError) throw videoError;
     }
 
     if (survey.gps_track_id) {
       const { error: gpsError } = await supabase
-        .from('gps_tracks')
+        .from("gps_tracks")
         .delete()
-        .eq('id', survey.gps_track_id)
+        .eq("id", survey.gps_track_id);
 
-      if (gpsError) throw gpsError
+      if (gpsError) throw gpsError;
     }
 
     const { error: surveyError } = await supabase
-      .from('surveys')
+      .from("surveys")
       .delete()
-      .eq('id', id)
+      .eq("id", id);
 
-    if (surveyError) throw surveyError
+    if (surveyError) throw surveyError;
 
     return {
       data: JSON.stringify({
         Status: "5001",
-        Message: "Survey and related data deleted successfully"
-      })
-    }
+        Message: "Survey and related data deleted successfully",
+      }),
+    };
   } catch (error) {
-    console.error('Error:', error)
+    console.error("Error:", error);
     return {
       data: JSON.stringify({
         Status: "5000",
-        Message: error
-      })
-    }
+        Message: error,
+      }),
+    };
   }
 }
 
-export async function getVideoList(filters : VideoListFilters, page = 1, pageSize = 10) {
+export async function getVideoList(
+  filters: VideoListFilters,
+  page = 1,
+  pageSize = 10
+) {
   try {
- 
     const supabase = await createClient();
     let query = supabase
-      .from('surveys')
-      .select(` 
+      .from("surveys")
+      .select(
+        ` 
         id,
         name,
         timestamp,
@@ -176,73 +184,86 @@ export async function getVideoList(filters : VideoListFilters, page = 1, pageSiz
         block,
         ring,
         child_ring
-      `, {count: "exact"})
-      .order('created_at', { ascending: false }).range((page - 1) * pageSize, page * pageSize - 1);
+      `,
+        { count: "exact" }
+      )
+      .order("created_at", { ascending: false })
+      .range((page - 1) * pageSize, page * pageSize - 1);
 
-
-      
-          if (filters.locationName) {
-            query = query.ilike('name', `%${filters.locationName}%`);
-          }
-          if (filters.state) {
-            query = query.ilike('state', `%${filters.state}%`);
-          }
-          if (filters.district) {
-            query = query.ilike('district', `%${filters.district}%`);
-          }
-          if (filters.block) {
-            query = query.ilike('block', `%${filters.block}%`);
-          }
-          if (filters.ring) {
-            query = query.eq('ring', filters.ring);
-          }
-          if (filters.childRing) {
-            query = query.ilike('child_ring', `%${filters.childRing}%`);
-            }
-          if (filters.routeName) {
-            query = query.ilike('name', `%${filters.routeName}%`);
-          }
-
-
+    if (filters.locationName) {
+      query = query.ilike("name", `%${filters.locationName}%`);
+    }
+    if (filters.state) {
+      query = query.ilike("state", `%${filters.state}%`);
+    }
+    if (filters.district) {
+      query = query.ilike("district", `%${filters.district}%`);
+    }
+    if (filters.block) {
+      query = query.ilike("block", `%${filters.block}%`);
+    }
+    if (filters.ring) {
+      query = query.eq("ring", filters.ring);
+    }
+    if (filters.childRing) {
+      query = query.ilike("child_ring", `%${filters.childRing}%`);
+    }
+    if (filters.routeName) {
+      query = query.ilike("name", `%${filters.routeName}%`);
+    }
 
     if (filters.userRole) {
-      const userRole = filters.userRole.toLowerCase(); 
-      
-      if (userRole === 'manager' && filters.userId) {
+      const userRole = filters.userRole.toLowerCase();
+
+      if (userRole === "manager" && filters.userId) {
         const { data: managedUsers } = await supabase
-          .from('users')
-          .select('user_id')
-          .eq('manager_id', filters.userId);
-          
-        const managedUserIds = managedUsers ? managedUsers.map(user => user.user_id) : [];
-        
+          .from("users")
+          .select("user_id")
+          .eq("manager_id", filters.userId);
+
+        const managedUserIds = managedUsers
+          ? managedUsers.map((user) => user.user_id)
+          : [];
+
         managedUserIds.push(filters.userId);
-        
-        query = query.in('user_id', managedUserIds);
-      } else if (userRole === 'surveyor' && filters.userId) {
-        query = query.eq('user_id', filters.userId);
+
+        query = query.in("user_id", managedUserIds);
+      } else if (userRole === "surveyor" && filters.userId) {
+        query = query.eq("user_id", filters.userId);
       }
     }
 
     if (filters.dateKey && filters.dateFrom && filters.dateTo) {
       const column =
-        filters.dateKey === 'Mobile_Video_Capture_On'
-          ? 'timestamp'
-          : filters.dateKey === 'Created_On'
-          ? 'created_at'
-          : filters.dateKey === 'Verified_On'
-          ? 'verified_on'
+        filters.dateKey === "Mobile_Video_Capture_On"
+          ? "timestamp"
+          : filters.dateKey === "Created_On"
+          ? "created_at"
+          : filters.dateKey === "Verified_On"
+          ? "verified_on"
           : null;
-    
+
       if (column) {
         const fromDate = new Date(filters.dateFrom);
         const toDate = new Date(filters.dateTo);
-    
-        if (column === 'timestamp') {
+
+        if (column === "timestamp") {
           // Include full day for timestamp column
-          const fromDateFormatted = `${String(fromDate.getDate()).padStart(2, '0')}-${String(fromDate.getMonth() + 1).padStart(2, '0')}-${fromDate.getFullYear()} 00:00:00`;
-          const toDateFormatted = `${String(toDate.getDate()).padStart(2, '0')}-${String(toDate.getMonth() + 1).padStart(2, '0')}-${toDate.getFullYear()} 23:59:59`;
-    
+          const fromDateFormatted = `${String(fromDate.getDate()).padStart(
+            2,
+            "0"
+          )}-${String(fromDate.getMonth() + 1).padStart(
+            2,
+            "0"
+          )}-${fromDate.getFullYear()} 00:00:00`;
+          const toDateFormatted = `${String(toDate.getDate()).padStart(
+            2,
+            "0"
+          )}-${String(toDate.getMonth() + 1).padStart(
+            2,
+            "0"
+          )}-${toDate.getFullYear()} 23:59:59`;
+
           query = query
             .gte(column, fromDateFormatted)
             .lte(column, toDateFormatted);
@@ -254,38 +275,52 @@ export async function getVideoList(filters : VideoListFilters, page = 1, pageSiz
         }
       }
     }
-    
 
     const { data: surveys, error: surveysError, count } = await query;
     if (surveysError) throw surveysError;
 
+    const videoIds = surveys.filter((s) => s.video_id).map((s) => s.video_id);
+    const gpsTrackIds = surveys
+      .filter((s) => s.gps_track_id)
+      .map((s) => s.gps_track_id);
+    const userIds = surveys.filter((s) => s.user_id).map((s) => s.user_id);
 
-    const videoIds = surveys.filter(s => s.video_id).map(s => s.video_id);
-    const gpsTrackIds = surveys.filter(s => s.gps_track_id).map(s => s.gps_track_id);
-    const userIds = surveys.filter(s => s.user_id).map(s => s.user_id);
+    const [videosResponse, gpsTracksResponse, usersResponse] =
+      await Promise.all([
+        videoIds.length > 0
+          ? supabase
+              .from("videos")
+              .select(
+                "id, name, created_at, verified_by, verified_on, url, users(username)"
+              )
+              .in("id", videoIds)
+          : { data: [] },
+        gpsTrackIds.length > 0
+          ? supabase
+              .from("gps_tracks")
+              .select("id, entity_id, duration")
+              .in("id", gpsTrackIds)
+          : { data: [] },
+        userIds.length > 0
+          ? supabase
+              .from("users")
+              .select("username, user_id")
+              .in("user_id", userIds)
+          : { data: [] },
+      ]);
 
-    const [videosResponse, gpsTracksResponse, usersResponse] = await Promise.all([
-      videoIds.length > 0 ? 
-        supabase.from('videos').select('id, name, created_at, verified_by, verified_on, url, users(username)').in('id', videoIds) :
-        { data: [] },
-      gpsTrackIds.length > 0 ?
-        supabase.from('gps_tracks').select('id, entity_id, duration').in('id', gpsTrackIds) :
-        { data: [] },
-      userIds.length > 0 ?
-        supabase.from('users').select('username, user_id').in('user_id', userIds) :
-        { data: [] }
-    ]);
-
-
-    const videosMap = new Map(videosResponse.data?.map(v => [v.id, v]) || []);
-    const gpsTracksMap = new Map(gpsTracksResponse.data?.map(g => [g.id, g]) || []);
-    const usersMap = new Map(usersResponse.data?.map(u => [u.user_id, u]) || []);
-
+    const videosMap = new Map(videosResponse.data?.map((v) => [v.id, v]) || []);
+    const gpsTracksMap = new Map(
+      gpsTracksResponse.data?.map((g) => [g.id, g]) || []
+    );
+    const usersMap = new Map(
+      usersResponse.data?.map((u) => [u.user_id, u]) || []
+    );
 
     return {
       data: JSON.stringify({
         Status: "5001",
-        Result: surveys.map(survey => {
+        Result: surveys.map((survey) => {
           const video = videosMap.get(survey.video_id) || {};
           const gpsTrack = gpsTracksMap.get(survey.gps_track_id) || {};
           const user = usersMap.get(survey.user_id) || {};
@@ -314,23 +349,27 @@ export async function getVideoList(filters : VideoListFilters, page = 1, pageSiz
             childRing: survey.child_ring || "-",
             duration: gpsTrack.duration || 0,
             verifiedBy: video.users?.username || null,
-            verifiedOn: video.verified_on || null
+            verifiedOn: video.verified_on || null,
           };
-        })
-      })
+        }),
+      }),
     };
   } catch (error) {
-    console.error('Error:', error);
+    console.error("Error:", error);
     return {
       data: JSON.stringify({
         Status: "5000",
-        Message: error.message
-      })
+        Message: error.message,
+      }),
     };
   }
-} 
+}
 
-export async function getVideoList2(filters: VideoListFilters, page = 1, pageSize = 10) {
+export async function getVideoList2(
+  filters: VideoListFilters,
+  page = 1,
+  pageSize = 10
+) {
   try {
     const supabase = await createClient();
 
@@ -379,13 +418,17 @@ export async function getVideoList2(filters: VideoListFilters, page = 1, pageSiz
       .range((page - 1) * pageSize, page * pageSize - 1);
 
     // --- Filters ---
-    if (filters.locationName) query = query.ilike("name", `%${filters.locationName}%`);
+    if (filters.locationName)
+      query = query.ilike("name", `%${filters.locationName}%`);
     if (filters.state) query = query.ilike("state", `%${filters.state}%`);
-    if (filters.district) query = query.ilike("district", `%${filters.district}%`);
+    if (filters.district)
+      query = query.ilike("district", `%${filters.district}%`);
     if (filters.block) query = query.ilike("block", `%${filters.block}%`);
     if (filters.ring) query = query.eq("ring", filters.ring);
-    if (filters.childRing) query = query.ilike("child_ring", `%${filters.childRing}%`);
-    if (filters.routeName) query = query.ilike("name", `%${filters.routeName}%`);
+    if (filters.childRing)
+      query = query.ilike("child_ring", `%${filters.childRing}%`);
+    if (filters.routeName)
+      query = query.ilike("name", `%${filters.routeName}%`);
 
     // --- Role-based filter ---
     if (filters.userRole) {
@@ -397,7 +440,9 @@ export async function getVideoList2(filters: VideoListFilters, page = 1, pageSiz
           .select("user_id")
           .eq("manager_id", filters.userId);
 
-        const managedUserIds = managedUsers ? managedUsers.map((u) => u.user_id) : [];
+        const managedUserIds = managedUsers
+          ? managedUsers.map((u) => u.user_id)
+          : [];
         managedUserIds.push(filters.userId);
 
         query = query.in("user_id", managedUserIds);
@@ -423,12 +468,26 @@ export async function getVideoList2(filters: VideoListFilters, page = 1, pageSiz
 
         if (column === "timestamp") {
           // Full day range in ISO format
-          const fromDateFormatted = `${fromDate.getFullYear()}-${String(fromDate.getMonth() + 1).padStart(2, "0")}-${String(fromDate.getDate()).padStart(2, "0")} 00:00:00`;
-          const toDateFormatted = `${toDate.getFullYear()}-${String(toDate.getMonth() + 1).padStart(2, "0")}-${String(toDate.getDate()).padStart(2, "0")} 23:59:59`;
+          const fromDateFormatted = `${fromDate.getFullYear()}-${String(
+            fromDate.getMonth() + 1
+          ).padStart(2, "0")}-${String(fromDate.getDate()).padStart(
+            2,
+            "0"
+          )} 00:00:00`;
+          const toDateFormatted = `${toDate.getFullYear()}-${String(
+            toDate.getMonth() + 1
+          ).padStart(2, "0")}-${String(toDate.getDate()).padStart(
+            2,
+            "0"
+          )} 23:59:59`;
 
-          query = query.gte(column, fromDateFormatted).lte(column, toDateFormatted);
+          query = query
+            .gte(column, fromDateFormatted)
+            .lte(column, toDateFormatted);
         } else {
-          query = query.gte(column, filters.dateFrom).lte(column, filters.dateTo);
+          query = query
+            .gte(column, filters.dateFrom)
+            .lte(column, filters.dateTo);
         }
       }
     }
@@ -471,35 +530,32 @@ export async function getVideoList2(filters: VideoListFilters, page = 1, pageSiz
           ring: s.ring || "-",
           childRing: s.child_ring || "-",
           locationName: "-",
-          locationData: []
-        }))
-      })
+          locationData: [],
+        })),
+      }),
     };
   } catch (error: any) {
     console.error("Error:", error);
     return {
       data: JSON.stringify({
         Status: "5000",
-        Message: error.message
-      })
+        Message: error.message,
+      }),
     };
   }
 }
 
-
-
 export async function getStates() {
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("get_distinct_states")
+  const { data, error } = await supabase.rpc("get_distinct_states");
   if (error) throw error;
   return data;
 }
 
 // Get distinct districts
 export async function getDistricts() {
-
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("get_distinct_districts")
+  const { data, error } = await supabase.rpc("get_distinct_districts");
   if (error) throw error;
   return data;
 }
@@ -507,32 +563,34 @@ export async function getDistricts() {
 // Get distinct blocks
 export async function getBlocks() {
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("get_distinct_blocks")
+  const { data, error } = await supabase.rpc("get_distinct_blocks");
   if (error) throw error;
   return data;
 }
 
 export async function getStateBlocksAndDistricts() {
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("get_state_blocks_and_districts")
+  const { data, error } = await supabase.rpc("get_state_blocks_and_districts");
 
- // console.log(data, 'districts')
+  // console.log(data, 'districts')
 
   if (error) {
-    console.error('Error fetching data:', error);
+    console.error("Error fetching data:", error);
     return [];
   }
 
   return data;
 }
 
-
-export async function verifyVideo(videoId: string, verified_by : string) {
+export async function verifyVideo(videoId: string, verified_by: string) {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("videos").update({
-    verified_by : verified_by,
-    verified_on : new Date().toISOString()
-  }).eq("id", videoId)
+  const { data, error } = await supabase
+    .from("videos")
+    .update({
+      verified_by: verified_by,
+      verified_on: new Date().toISOString(),
+    })
+    .eq("id", videoId);
 
   if (error) throw error;
   return data;

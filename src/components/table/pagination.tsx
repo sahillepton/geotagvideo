@@ -79,7 +79,6 @@ export function TablePagination({
     <div className="flex items-center justify-center mt-4">
       <Pagination className="bg-[#f0f0f0] w-full max-w-[450px] rounded-full ">
         <PaginationContent className="gap-1">
-          {/* Previous */}
           <PaginationItem className="">
             <PaginationPrevious
               href="#"

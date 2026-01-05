@@ -140,7 +140,7 @@ export default function SurveyTable({ currentUser }: { currentUser: User }) {
 
   return (
     <div className={`container py-6 transition-all duration-300`}>
-      <div className="mb-4 w-full flex justify-between">
+      <div className="mb-4 flex justify-between">
         <SearchBar />
 
         <div className="flex items-center gap-2 h-8">

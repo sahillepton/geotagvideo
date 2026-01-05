@@ -5,7 +5,7 @@ import { BadgeCheckIcon, CalendarIcon, ClockIcon, XIcon } from "lucide-react";
 import moment from "moment";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Badge } from "../ui/badge";
-import { getRandomAvatarColor, sumTimestamps } from "@/lib/utils";
+import { formatTime, getRandomAvatarColor } from "@/lib/utils";
 import ColumnRowAction from "../columns/column-row-action";
 import ColumnHoverCard from "../columns/column-hover-card";
 import TextTruncate from "../columns/text-truncate";
@@ -91,11 +91,7 @@ export function createSurveyColumns({
       header: "Duration",
       cell: ({ row }) => (
         <ColumnBadge
-          text={
-            row.original.duration > 0
-              ? sumTimestamps(row.original.duration)
-              : "00:00"
-          }
+          text={formatTime(row.original.duration)}
           color="info"
           icon={<ClockIcon size={14} />}
         />

@@ -3,7 +3,6 @@ import { twMerge } from "tailwind-merge";
 import { supabase } from "./supabase";
 import Papa from "papaparse";
 
-// Tailwind class merge
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -27,12 +26,25 @@ export function sumTimestamps(totalSeconds: number) {
 }
 
 // Format time in seconds to M:SS or MM:SS format
-export function formatTime(t: number): string {
-  if (!t) return "0:00";
-  const min = Math.floor(t / 60);
-  const sec = Math.floor(t % 60);
-  return `${min}:${sec < 10 ? "0" : ""}${sec}`;
+export function formatTime(diffInSeconds: number): string {
+  if (!diffInSeconds || diffInSeconds < 0) return "00:00";
+
+  const days = Math.floor(diffInSeconds / 86400);
+  const hours = Math.floor((diffInSeconds % 86400) / 3600);
+  const minutes = Math.floor((diffInSeconds % 3600) / 60);
+  const seconds = Math.floor(diffInSeconds % 60);
+
+  if (days > 0) {
+    return `${days}d ${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  }
+
+  return `${hours.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 }
+
 const avatarColors = [
   { bg: "bg-green-200", text: "text-green-800" },
   { bg: "bg-blue-200", text: "text-blue-800" },
