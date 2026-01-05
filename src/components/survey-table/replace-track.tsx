@@ -62,7 +62,11 @@ const ReplaceTrack = () => {
         if (!zippedFile.dir) {
           const content = await zippedFile.async("blob");
 
-          if (filename.endsWith(".txt")) {
+          if (
+            filename.endsWith(".txt") ||
+            filename.endsWith(".json") ||
+            filename.endsWith(".geojson")
+          ) {
             setFiles((prev) => [...prev, { filename, content }]);
           }
         }
@@ -134,7 +138,8 @@ const ReplaceTrack = () => {
         }
 
         // Only proceed to Supabase if JSON parsing and validation succeeded
-        const surveyId = file.filename.split(".")[0];
+        // Extract surveyId by removing file extension (.txt, .json, or .geojson)
+        const surveyId = file.filename.replace(/\.(txt|json|geojson)$/i, "");
         const { data: surveyData, error: surveyError } = await supabase
           .from("surveys")
           .select("gps_track_id")
@@ -184,8 +189,14 @@ const ReplaceTrack = () => {
           <DialogTitle className="font-bold">Replace Tracks</DialogTitle>
           <DialogDescription asChild>
             <ol className="list-decimal list-inside font-extrabold">
-              <li>File containing new track info should be .txt file</li>
-              <li>File name should be "surveyid.txt"</li>
+              <li>
+                File containing new track info should be .txt, .json, or
+                .geojson file
+              </li>
+              <li>
+                File name should be "surveyid.txt", "surveyid.json", or
+                "surveyid.geojson"
+              </li>
               <li>
                 Place all files in the same folder and upload a zip of the
                 folder
