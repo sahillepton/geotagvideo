@@ -26,10 +26,6 @@ interface ManagerCellProps {
 export function ManagerCell({ managerId, allUsers }: ManagerCellProps) {
   const manager = allUsers?.find((user: any) => user.user_id === managerId);
 
-  if (!manager) {
-    return <span className="text-xs text-gray-400">No Manager</span>;
-  }
-
   const color = getRandomAvatarColor();
 
   return (
@@ -37,10 +33,10 @@ export function ManagerCell({ managerId, allUsers }: ManagerCellProps) {
       <div className="flex items-center gap-2">
         <Avatar className="w-6 h-6 text-xs flex items-center justify-center">
           <AvatarFallback className={`${color.bg} ${color.text} font-semibold`}>
-            {manager.username?.charAt(0).toUpperCase()}
+            {manager?.username?.charAt(0).toUpperCase()}
           </AvatarFallback>
         </Avatar>
-        <p className="text-xs">{manager.username}</p>
+        <p className="text-xs">{manager ? manager?.username : "No Manager"}</p>
       </div>
     </div>
   );
